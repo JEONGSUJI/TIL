@@ -1,0 +1,3 @@
+Yesterday, I tried creating a git blog.
+but, so difficult...
+I will try again.
