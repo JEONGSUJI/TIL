@@ -143,7 +143,7 @@ console.log(isNaN(new Date().toStirng()));  // true
 
 - 매개변수에 전달된 문자열을 부동소수점 숫자로 변환하여 반환한다.
 
-```javascrip
+```javascript
 parseFloat(string)
 
 console.log(parseFloat('3.14')); // 3.14
