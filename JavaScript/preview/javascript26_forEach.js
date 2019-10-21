@@ -16,6 +16,9 @@ const Numbers = (function() {
     
     // 3번방법
     }, this);
+    
+    // 화살표 함수는 내부에 this를 갖지 않는다.
+    // arr.forEach(item => this.numberArray.push(item * item));
   };
   return Numbers;
 }());

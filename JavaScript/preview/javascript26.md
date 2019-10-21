@@ -60,6 +60,16 @@
 
 ### 1) 배열리터럴
 
+```javascript
+const arr = [1, 2, 3];
+console.log(arr.length); // 3
+```
+
+- 객체 리터럴과 달리 프로퍼티 이름이 없고 값만이 존재
+- 배열 리터럴에 요소를 생략하면 희소 배열이 생성
+
+
+
 ### 2) Array 생성자 함수
 
 ### 3) Array.of
@@ -97,9 +107,46 @@
 
 ### 1) Array.isArray
 
+- Array 생성자 함수의 정적 메소드이다.
+- 주어진 인수가 배열이면 true, 배열이 아니면 false를 반환한다.
+
+```javascript
+Array.isArray();
+```
+
+
+
 ###  2) Array.prototype.push
 
-### 3) Array.prototype.push
+- push 메소드는 인수로 전달받은 모든 값을 원본 배열의 마지막 요소로 추가하고 변경된 length 값을 반환한다.
+- push 메소드는 원본 배열을 직접 변경함으로 부수 효과가 있다.
+
+```javascript
+const arr = [1, 2];
+
+let result = arr.push(3, 4);
+// arr[arr.length] = 3, 4;
+console.log(result);// 4 -> 인수로 전달받은 모든 값을 원본 배열의 마지막 요소로 추가하고 변경된 length 값을 반환한다.
+
+console.log(arr); // [1, 2, 3, 4]
+```
+
+
+
+### 3) Array.prototype.pop
+
+- pop 메소드는 원본 배열에서 마지막 요소를 제거하고 제거한 요소를 반환한다. 원본 배열이 빈 배열이면 undefined를 반환한다.
+- pop 메소드는 원본 배열을 직접 변경한다.
+
+```javascript
+const arr = [1, 2];
+
+// 원본 배열에서 마지막 요소를 제거하고 제거한 요소를 반환한다.
+let result = arr.pop();
+console.log(result);
+```
+
+
 
 ### 4)  Array.prototype.unshift
 
@@ -120,6 +167,12 @@
 ### 12) Array.prototype.fill
 
 ### 13) Array.prototype.includes
+
+
+
+- pop 메소드와 push 메소드를 사용하면 스택을 쉽게 구현할 수 있다.
+
+> **스택(stack)**은 데이터를 마지막에 밀어 넣고, 마지막에 밀어 넣은 데이터를 먼저 꺼내는 후입 선출(LIFO)방식의 자료구조이다.
 
 
 
