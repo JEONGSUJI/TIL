@@ -27,8 +27,10 @@
 const arr = new Array(5).fill();
 
 arr.forEach((v, i, self) => self[i] = () => i);
-console.log(arr);
+console.log(Object.getOwnPropertyDescriptors(arr, 'value'));
 
 
 arr.forEach(f => console.log(f()));
 console.log(arr);
+console.log(Object.getOwnPropertyDescriptors(arr));
+

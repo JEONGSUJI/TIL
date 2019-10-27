@@ -213,10 +213,6 @@ foo(20); // 42
 
 ![](https://poiemaweb.com/assets/fs-images/22-10.png)
 
->
->
->
-
 
 
 **3) 전역 코드 실행**
