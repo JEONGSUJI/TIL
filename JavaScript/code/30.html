@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      .red  { color: #ff0000; }
+      .blue { color: #0000ff; }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>Cities</h1>
+      <ul>
+        <li id="one" class="red">Seoul</li>
+        <li id="two" class="red">London</li>
+        <li id="three" class="red">Newyork</li>
+        <li id="four">Tokyo</li>
+      </ul>
+    </div>
+    <script type="text/javascript">
+      // const elem = document.getElementById('one');
+      // elem.className = 'blue';
+
+      // console.log(elem);
+      // console.log(elem.__proto__);
+      // console.log(elem.__proto__.__proto__);
+      // console.log(elem.__proto__.__proto__.__proto__);
+      // console.log(elem.__proto__.__proto__.__proto__.__proto__);
+      
+
+      // const elem2 = document.querySelector('li.red');
+      // elem2.className = 'blue';
+
+
+      // const elems = document.getElementsByClassName('red');
+      // for (let i = 0; i < elems.length; i++){
+      //   elems[i].className = 'blue';
+      // }
+
+
+      // const elems = document.getElementsByClassName('red');
+
+      // 유사 배열 객체인 HTMLCollection을 배열로 변환한다.
+      // 배열로 변환된 HTMLCollection은 더 이상 live하지 않다.
+      // console.log([...elems]); // [li#one.red, li#two.red, li#three.red]
+
+      // [...elems].forEach(elem => elem.className = 'blue');
+
+
+      // const elem = document.querySelector('#two');
+      // console.log(elem);
+      
+      // elem.parentNode.className = 'blue';
+      // console.log(elem.parentNode);
+      
+      
+      const elem = document.querySelector('ul');
+      console.log(elem);
+      
+      // first Child
+      elem.firstElementChild.className = 'blue';
+      
+      // last Child
+      elem.lastElementChild.className = 'blue';
+    </script>
+  </body>
+</html>
