@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <ul id="myId" class="class1 class2" style="color:red;">
+    <li>HTML</li>
+    <li>CSS</li>
+    <li>JavaScript</li>
+  </ul>
+  
+  <script>
+    // const $ulElem = document.querySelector('#myId');
+    // // console.log($ulElem);
+
+    // $ulElem.style.color = 'blue';
+
+    // console.log($ulElem.className);
+    // console.log($ulElem.classList);
+    // console.log($ulElem.classList.add('class3'));
+    // console.log($ulElem.classList.contains('class3'));
+    // console.log($ulElem.classList.remove('class3'));
+    // console.log([...$ulElem.classList].forEach(item => console.log(item)));
+    
+    const $lis = document.querySelectorAll('li');
+    // console.log($lis);
+    
+    // $lis.forEach(li => li.classList.add('class10'));
+
+    // console.log([...$lis]);
+    // [...$lis].forEach((li, i) => li.classList.add(`class${i+1}`));
+
+    // document.querySelector('#myId').innerHTML += '<h1>Hello</h1>';
+    // console.log(document.querySelector('#myId').attributes);
+    
+    const $li = document.querySelector('li');
+    console.log($li);
+    
+    $li.nextElementSibling.style.color = 'blue';
+    // console.log($li.parentElement);
+    
+    // const $ul = document.querySelector('ul');
+    // console.dir($ul);
+    
+    const $ul = document.querySelector('ul');
+    $ul.firstElementChild.style.color = 'purple';
+    $ul.lastElementChild.style.color = 'pink';
+
+
+  </script>
+</body>
+</html>
