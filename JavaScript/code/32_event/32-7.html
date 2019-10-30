@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div class="container">
+    <button id="btn1">Hide me 1</button>
+    <button id="btn2">Hide me 2</button>
+  </div>
+
+  <script>
+    const container = document.querySelector('.container');
+
+    function hide(e) {
+      // e.target은 실제로 이벤트를 발생시킨 DOM 요소를 가리킨다.
+      e.style.visibility = 'hidden';
+      // this는 이벤트에 바인딩된 DOM 요소(.container)를 가리킨다. 따라서 .container 요소를 감춘다.
+      // this.style.visibility = 'hidden';
+    }
+
+    container.addEventListener('click', hide);
+  </script>
+</body>
+</html>

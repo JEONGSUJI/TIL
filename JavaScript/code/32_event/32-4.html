@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ko">
+<body>
+  <label>User name<input type="text"></label>
+  <em class="message"></em>
+
+  <script>
+  const input = document.querySelector('input[type=text]');
+  const msg = document.querySelector('.message');
+  const NAME_MIN_LENGTH = 2;
+
+  input.addEventListener('blur', function(){
+      if(input.value.length < NAME_MIN_LENGTH){
+        msg.innerHTML= '이름은 2자 이상';
+      }else{
+        msg.innerHTML= '';
+      }
+    });
+  </script>
+</body>
+</html>
