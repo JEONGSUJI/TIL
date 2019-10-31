@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <title>Document</title>
+</head>
+<body>
+  <button class="add">add</button>
+  <ul class="todos"></ul>
+<script>
+    const $todos = document.querySelector('.todos');
+    const $button = document.querySelector('.add');
+
+    $button.addEventListener('click', function(){
+      $todos.innerHTML += `<li class="todo">test<button class="remove">x</button></li>`;
+    });
+
+    $todos.addEventListener('click', function(e){
+      // console.log(e.target.className);
+      
+      if(!e.target.classList.contains('remove')) return;
+      // e.target.parentNode.remove();
+
+      $todos.removeChild(e.target.parentNode);
+    });
+  </script>
+</body>
+</html>

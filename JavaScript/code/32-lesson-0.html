@@ -1,0 +1,70 @@
+<!-- <!DOCTYPE html>
+<html lang="ko">
+<head>
+  <title>Document</title>
+</head>
+<body>
+  <input type="text">
+  <button>Click me!</button>
+  <p class="value"></p>
+
+  <script>
+    const $input = document.querySelector('input');
+    const $button = document.querySelector('button');
+    const $value = document.querySelector('.value');
+
+    $input.oninput = function(){
+      $value.innerHTML = $input.value;
+    }
+
+  </script>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <title>Document</title>
+  </head>
+  <body>
+    <input type="text" onclick="foo()">
+  브라우저가 프로퍼티 이름으로 함수를 만들고 이벤트의 호출문으로 넣어줌 그래서 여러개의 함수를 넣을 수 있다.
+  <input type="text" onclick="foo();,foo();">
+  <button>Click me!</button>
+  <p class="value"></p>
+
+  <script>
+    const $input = document.querySelector('input');
+    const $button = document.querySelector('button');
+    const $value = document.querySelector('.value');
+
+    const foo= function(){
+      $value.innerHTML = $input.value;
+    };
+
+  </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <title>Document</title>
+</head>
+<body>
+  <input type="text">
+  <button>Click me!</button>
+  <p class="value"></p>
+
+  <script>
+    const $input = document.querySelector('input');
+    const $button = document.querySelector('button');
+    const $value = document.querySelector('.value');
+
+    $input.addEventListener('input', function(){
+      $value.innerHTML = $input.value;
+    });
+
+  </script>
+</body>
+</html>
