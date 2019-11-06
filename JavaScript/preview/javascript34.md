@@ -1,189 +1,582 @@
-# Ajax 비동식 처리 모델과 Ajax
+# DOM (Document Object Model)
 
 
 
-## 1. Ajax(Asynchronous JavaScript and XML)
+## **1. DOM이란?**
 
-- 브라우저에서 웹페이지를 요청하거나 링크를 클릭하면 브라우저와 서버와의 통신에 의해 화면 갱신이 발생한다.
+- 텍스트 파일로 만들어져 있는 웹 문서(HTML, XML, SVG)를 브라우저에 렌더링하려면 웹 문서를 브라우저가 이해할 수 있는 구조로 메모리에 올려야한다. 브라우저의 렌더링 엔진은 웹 문서를 로드한 후, 파싱하여 웹 문서를 브라우저가 이해할 수 있는 구조로 구성하여 메모리에 적재하는 것을 말한다.
 
-![](https://poiemaweb.com/img/req_res.png)
+- 모든 요소와 요소의 어트리뷰트, 텍스트를 각각의 객체로 만들고 이들 객체 부자 관계를 표현할 수 있는 트리 구조로 구성한 것이다.
+- 자바스크립트를 통해 동적으로 변경할 수 있으며 변경된  DOM은 렌더링에 반영된다.
+- DOM은 호스트 객체로 W3C의 공식 표준이며 플랫폼/프로그래밍 언어 중립적이다.
+- DOM이 담당하는 2가지 기능
+  - HTML 문서에 대한 모델 구성
+    - 브라우저는 HTML 문서를 로드한 후 해당 문서에 대한 모델(객체의 트리로 구성되며 이를 DOM tree라 함)을 메모리에 생성한다.
+  - HTML 문서 내의 각 요소에 접근 및 수정
+    - DOM은 모델 내의 각 객체에 접근하고 수정할 수 있는 프로퍼티와 메소드를 제공한다.
 
-- 서버는 요청받은 페이지를 반환하는데 이때 HTML에서 로드하는 CSS나 JavaScript 파일들도 같이 반환된다.
+![](https://poiemaweb.com/img/client-server.png)
 
-
-
-|                        동기 통신 방식                        |                     비동기 통신 방식                      |
-| :----------------------------------------------------------: | :-------------------------------------------------------: |
-| ![](https://poiemaweb.com/img/traditional-webpage-lifecycle.png) | ![](https://poiemaweb.com/img/ajax-webpage-lifecycle.png) |
-
-- **Ajax는 자바스크립트를 이용해서 <u>비동기적</u>으로 서버와 브라우저가 데이터를 교환할 수 있는 통신 방식을 의미한다.**서버로부터 웹페이지가 반환되면 화면 전체를 갱신해야하는데 페이지 일부만을 갱신하고도 동일한 효과를 볼 수 있도록 하는 것이다.
-
-
-
-
-## 2. JSON (JavaScript Object Notation)
-
-- **JSON**은 <u>클라이언트와 서버 간 데이터 교환을 위한 규칙, 데이터 포맷을 말한다. 순수한 텍스트로 구성된 규칙이 있는 데이터 구조이다.</u>
-
-- JSON은 순수히 데이터 포맷으로 오직 프로퍼티만 담을 수 있다.
-
-- **JSON 장점**
-
-  - 일반 텍스트 포맷보다 효과적인 데이터 구조화가 가능하다.
-  - XML 포맷보다 가볍고 사용하기 간편하며 가독성도 좋다.
-
-  주의)  <u>키는 반드시 큰따옴표로 둘러싸야 한다.</u>
+> **DOM API(Application Programming Interface)**
+>
+> 웹 문서의 동적 변경을 위해 DOM은 프로그래밍 언어가 자신에 접근하고 수정할 수 있는 방법을 제공하는데 일반적으로 프로퍼티와 메소드를 갖는 자바스크립트 객체로 제공되는 것을 말한다.
 
 
 
-### 1) JSON.stringify
-
-- **JSON.stringify 메소드는 JavaScript 값이나 객체를 JSON 형식의 문자열로 변환한다.**
-
-<code>JSON.stringify(value[, replacer[, space]])</code>
-
-- 매개변수
-  - value : JSON 문자열로 변환할 값
-  - replacer : 문자열화 동작방식을 변경하는 함수
-  - space : 가독성을 목적으로 JSON 문자열 출력에 공백을 삽입하는데 사용되는 String, Number 객체
-
-- 반환 값 : 주어진 값과 대응하는 JSON 문자열
+결론: **정적인 웹페이지에 접근하여 동적으로 웹페이지를 변경하기 위한 유일한 방법은 메모리 상에 존재하는 DOM을 변경하는 것이고, 이때 필요한 것이 DOM에 접근하고 변경하는 프로퍼티와 메소드의 집합인 DOM API다.**
 
 
 
-### 2) JSON.parse
+## 2. DOM tree
 
-- **JSON.parse 메소드는  JSON데이터를 가진 문자열을 객체로 변환한다.**
-- 배열의 요소가 객체인 경우 배열의 요소까지 객체로 변환한다.
-
-<code>JSON.parse(text[, reviver])</code>
-
-> 서버로부터 브라우저로 전송된 JSON 데이터는 문자열인데, 이 문자열을 객체로서 사용하려면 객체화하여야 한다. 이를 역직렬화(Deserializing)이라 한다
+- 브라우저가 HTML 문서를 로드한 후 파싱하여 생성하는 모델로 객체의 트리로 구조화 되어있어 DOM tree라 부른다.
 
 
 
-## 3. XMLHttpRequest
+![](https://poiemaweb.com/img/dom-tree.png)
 
-브라우저는 XMLHttpRequest 객체를 이용하여 Ajax 요청을 생성하고 전송한다. 서버가 브라우저의 요청에 대해 응답을 반환하면 같은 XMLHttpRequest 객체가 그 결과를 처리한다.
+
+
+- DOM에서 모든 요소, 어트리뷰트, 텍스트는 하나의 객체이며 Document 객체의 자식이다.
+- 요소의 중첩관계는 객체의 트리로 구조화하여 부자관계를 표현한다.
+- DOM tree의 진입점(Entry point)는 document 객체이며 최종점은 요소의 텍스트를 나타내는 객체이다.
+
+
+
+| DOM tree를 구성하는 노드        |                                                              |
+| ------------------------------- | ------------------------------------------------------------ |
+| 문서노드(Document Node)         | 트리의 최상위에 존재하며 각각 요소, 어트리뷰트, 텍스트 노드에 접근하려면 문서 노드를 통해야 한다. **DOM tree에 접근하기 위한 시작점**이다. |
+| 요소노드(Element Node)          | HTML 요소를 표현한다. HTML 요소는 중첩에 의해 부자 관계를 가지며 이 부자 관계를 통해 정보를 구조화한다. 따라서 **요소노드는 문서의 구조를 서술**한다. 어트리뷰트, 텍스트 노드에 접근하려면 요소 노드를 먼저 찾고 접근해야한다. 모든 요소 노드는 요소별 특성을 표현하기 위해 HTMLElement 객체를 상속한 객체로 구성된다. |
+| 어트리뷰트 노드(Attribute Node) | HTML 요소의 어트리뷰트를 표현한다. 어트리뷰트 노드는 해당 어트리뷰트가 지정된 요소의 자식이 아니라 해당 요소의 일부로 표현된다. 해당 요소 노드를 찾아 접근하면 어트리뷰트를 참조, 수정할 수 있다. |
+| 텍스트 노드(Text Node)          | **HTML 요소의 텍스트를 표현**한다. 텍스트 노드는 요소 노드의 자식이며 자신의 **자식 노드를 가질 수 없다**. **DOM tree의 최종단**이다. |
+
+
+
+- DOM을 통해 웹페이지를 조작하기 위해 필요한 수순
+
+  1) 조작하고자하는 요소를 선택 또는 탐색
+
+  2) 선택된 요소의 콘텐츠 또는 어트리뷰트를 조작 
+
+
+
+## 3. DOM Query / Traversing (요소에의 접근)
+
+
+
+### 1) 하나의 요소 노드 선택(DOM Query)
+
+- <code>**document.getElementById(id)**</code>
+  - **id 어트리뷰트 값으로 요소 노드를 한개 선택한다.** (복수개 선택된 경우, 첫번째 요소만 반환)
+  - return : HTMLElement를 상속받은 객체
+  - 모든 브라우저에서 동작한다.
+
+- <code>**document.querySelector(cssSelector)**</code>
+  - **CSS 셀렉터를 사용하여 요소 노드를 한개 선택한다.** (복수 개 선택된 경우, 첫번째 요소만 반환)
+  - return: HTMLElement를 상속받은 객체
+  - IE8 이상의 브라우저에서 동작
+
+
+
+### 2) 여러 개의 요소 노드 선택 (DOM Query)
+
+- <code>**document.getElementsByClassName(class)**</code>
+
+  - class 어트리뷰트 값으로 요소 노드를 모두 선택한다. 공백으로 구분하여 여러 개의 class를 지정할 수 있다.
+
+  - return : HTMLCollection (live)
+
+    - 반환값이 복수인 경우, HTMLElement의 리스트를 담아 반환하기 위한 객체로 배열과 비슷한 사용법을 가지고 있지만 배열은 아닌 유사배열이다. 
+
+    - 또한 HTMLCollection은 실시간으로 Node의 상태 변경을 반영하기 때문에 loop가 필요한 경우 주의가 필요하다.
+
+      - 해결방법 
+
+        1) 반복문을 역방향으로 돌린다.
+
+        2) while 반복문을 사용한다. 이때 elems에 요소가 남아 있지 않을 때까지 무한반복하기 위해 index는 0으로 고정시킨다.
+
+        3) (권장) HTMLCollection을 배열로 변경한다.
+
+        4) querySelectorAll 메소드를 사용하여 HTMLCollection이 아닌 NodeList(non-live)를 반환하게 한다.
+
+  - IE9 이상의 브라우저에서 동작
+
+  
+
+- <code>**document.getElementsByTagName(tagName)**</code>
+  - 태그명으로 요소 노드를 모두 선택한다.
+  - return: HTMLCollection (live)
+  - 모든 브라우저에서 동작
+
+
+
+- <code>**document.querySelectorAll(selector)**</code>
+  - 지정된 CSS 선택자를 사용하여 요소 노드를 모두 선택한다.
+  - return : NodeList(non-live)
+  - IE8 이상의 브라우저에서 동작
+
+
+
+### 3) DOM Traversing (탐색)
+
+
+
+#### **[부모 노드 관련]**
+
+<code>**parentNode**</code>
+
+- 부모 노드를 탐색한다.
+- return: HTMLElement를 상속받은 객체
+- 모든 브라우저에서 동작
+
+
+
+<code>**firstChild, lastChild**</code>
+
+- 자식 노드를 탐색한다.
+- return : HTMLElement를 상속받은 객체
+- IE9 이상의 브라우저에서 동작
+
+
+
+> **주의사항**
+>
+> ```javascript
+> const elem = document.querySelector('ul');
+> 
+> // first Child
+> elem.firstChild.className = 'blue';
+> // last Child
+> elem.lastChild.className = 'blue';
+> ```
+>
+> 위 예제는 예상대로 동작하지 않는데, 이유는 <u>IE를 제외한 대부분의 브라우저들은 요소 사이의 공백 또는 줄바꿈 문자를 텍스트 노드로 취급하기 때문</u>이다. 
+>
+> ```html
+> <ul>
+>     <li id="one" class="red">Seoul</li>
+>     <li id="two" class="red">London</li>
+>     <li id="three" class="red">Newyork</li>
+>     <li id="four">Tokyo</li>
+> </ul>
+> ```
+>
+> **이를 회피하기 위한 방법**
+>
+> 1)  아래와 같이 HTML의 공백을 제거
+>
+> ```html
+> <ul><li
+>   id='one' class='red'>Seoul</li><li
+>   id='two' class='red'>London</li><li
+>   id='three' class='red'>Newyork</li><li
+>   id='four'>Tokyo</li></ul>
+> ```
+>
+> 2) jQuery:.prev()와 jQueryL:.next()를 사용
+>
+> 3) firstElementChild, lastElementChild를 사용 (IE9 이상 정상 작동)
+>
+> ```javascript
+> const elem = document.querySelector('ul');
+> 
+> // first Child
+> elem.firstElementChild.className = 'blue';
+> // last Child
+> elem.lastElementChild.className = 'blue';
+> ```
+
+
+
+#### **[자식 노드 관련]**
+
+- <code>**hasChildNodes()**</code>
+  - **자식 노드가 있는지 확인하고 Boolean 값을 반환한다.**
+  - return: Boolean 값
+  - 모든 브라우저에서 동작한다.
+
+
+
+- <code>**childNodes()**</code>
+  - **자식 노드의 컬렉션을 반환한다. 텍스트 요소를 포함한 모든 자식 요소를 반환한다.**
+  - return: NodeList (non-live)
+  - 모든 브라우저에서 동작한다.
+
+
+
+- <code>**children()**</code>
+  - **자식 노드의 컬렉션을 반환한다. 자식 요소 중에서 Element type 요소만을 반환한다.**
+  - return: HTMLCollection (live)
+  - IE9 이상의 브라우저에서 동작
+
+
+
+#### **[형제 노드 관련]**
+
+- <code>**previousSibling, nextSibling**</code>
+  - 형제 노드를 탐색한다. **text node를 포함한 모든 형제 노드를 탐색한다.**
+  - return: HTMLElement를 상속받은 객체
+  - 모든 브라우저에서 동작
+
+
+
+- <code>**previousElementSibling, nextElementSibling**</code>
+  - 형제 노드를 탐색한다. **형제 노드 중에서 Element type 요소만을 탐색한다**
+  - return: HTMLElement를 상속받은 객체
+  - IE9 이상의 브라우저에서 동작
+
+
+
+## 4. DOM Manipulation (조작)
+
+
+
+### 1) 텍스트 노드에의 접근/수정
+
+- 요소의 텍스트는 텍스트 노드에 저장되어 있다. 텍스트 노드에 접근하려면 아래와 같은 수순이 필요하다.
+
+  
+
+  1) 해당 텍스트 노드의 부모 노드를 선택한다. 텍스트 노드는 요소 노드의 자식이다. (nodeName, nodeType을 통해 노드의 정보를 취득할 수 있다.)
+
+  2) firstChild 프로퍼티를 사용하여 텍스트 노드를 탐색한다.
+
+  3) 텍스트 노드의 유일한 프로퍼티(nodeValue)를 이용하여 텍스트를 취득한다.
+
+  4) nodeValue를 이용하여 텍스트를 수정한다.
+
+  
+
+> **nodeValue**
+>
+> - 노드의 값을 반환한다.
+> - return: 텍스트 노드의 경우는 문자열, 요소 노드의 경우 null 반환
+> - IE6 이상의 브라우저에서 동작한다.
+
+
+
+### 2) 어트리뷰트 노드에의 접근/수정
+
+- 어트리뷰트 노드를 조작할 때 다음 프로퍼티 또는 메소드를 사용할 수 있다.
+
+
+
+<code>**className**</code>
+
+- **class 어트리뷰트의 값을 취득 또는 변경한다.** className 프로퍼티에 값을 **할당하는 경우, class 어트리뷰트가 존재하지 않으면 class 어트리뷰트를 생성하고 지정된 값을 설정**한다.
+- class 어트리뷰트의 값이 여러 개일 경우, 공백으로 구분된 문자열이 반환되므로 String 메소드 split(' ')를 사용하여 배열로 변경하여 사용한다.
+- 모든 브라우저에서 동작한다.
 
 ```javascript
-// XMLHttpRequest 객체의 생성
-const xhr = new XMLHttpRequest();
-xhr.open('GET', '/users');
-xhr.send();
+[...elems].forEach(elem => {
+  // class 어트리뷰트 값을 취득하여 확인
+  if (elem.className === 'red') {
+    // class 어트리뷰트 값을 변경한다.
+    elem.className = 'blue';
+  }
+});
 ```
 
 
 
-### 1) Ajax request
+<code>**classList**</code>
 
-#### 	a) XMLHttpRequest.open
+- add, remove, item, toggle, contains, replace 메소드를 제공한다.
+- IE10 이상의 브라우저에서 동작한다.
 
-- XMLHttpRequest 객체의 인스턴스를 생성하고 해당 메소드를 사용하여 서버로의 요청을 준비한다.
-
-​		<code>XMLHttpRequest.open(method, url[, async])</code>
-
-  - 매개변수
-    		- method : HTTP method
-    		- url : 요청을 보낼 URL
-    		- async : 비동기 조작여부, (default = true)
-
-
-
-#### 	b) XMLHttpRequest.send
-
-- XMLHttpRequest.send 메소드로 준비된 요청을 서버에 전달한다.
-
-  <code>XMLHttpRequest.send()</code>
-
-  - <u>GET 메소드</u>의 경우, URL의 일부분인 쿼리문자열로 데이터를 서버에 전송
-  - <u>POST 메소드</u>의 경우, 데이터(페이로드)를 Request Body에 담아 전송
-
-- XMLHttpRequest.send 메소드는 **request body**에 담아 전송할 인수를 전달할 수 있다. 
-
-- 단, 요청 메소드가 GET인 경우 send 메소드의 인수는 무시되고 request body는 null로 설정된다.
-
-![](https://poiemaweb.com/img/HTTP_request+response_message.gif)
+```javascript
+[...elems].forEach(elem => {
+  // class 어트리뷰트 값 확인
+  if (elem.classList.contains('blue')) {
+    // class 어트리뷰트 값 변경한다.
+    elem.classList.replace('blue', 'red');
+  }
+});
+```
 
 
 
-#### 	c) XMLHttpRequest.setRequestHeader
+<code>**id**</code>
 
-- XMLHttpRequest.setRequestHeader 메소드는 HTTP Request Header의 값을 설정한다.
+- id 어트리뷰트의 값을 취득 또는 변경한다. id 프로퍼티에 값을 할당하는 경우, id 어트리뷰트가 존재하지 않으면 id 어트리뷰트를 생성하고 지정된 값을 설정한다.
+- 모든 브라우저에서 동작한다.
 
-  <code>XMLHttpRequest.setRequestHeader()</code>
 
-- setRequestHeader 메소드는 반드시 XMLHttpRequest.open 메소드 호출 이후에 호출한다.
 
-  - **Content-type**
+<code>**hasAttribute(attribute)**</code>
 
-    <code> xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded'); </code>
+- 지정한 어트리뷰트를 가지고 있는지 검사한다.
+- return : Boolean
+- IE8 이상의 브라우저에서 동작한다.
 
-    - request body에 담아 전송할 데이터의 MIME-type의 정보를 표현
+```jav
+  // value 어트리뷰트가 존재하지 않으면
+  if (!input.hasAttribute('value')) {
+    // value 어트리뷰트를 추가하고 값으로 'hello!'를 설정
+    input.setAttribute('value', 'hello!');
+  }
+```
 
-    | 타입                        | 서브타입                                           |
-    | :-------------------------- | :------------------------------------------------- |
-    | text 타입                   | text/plain, text/html, text/css, text/javascript   |
-    | Application 타입            | application/json, application/x-www-form-urlencode |
-    | File을 업로드하기 위한 타입 | multipart/formed-data                              |
 
-  - **Accept**
 
-    <code> xhr.setRequestHeader('Accept', 'application/json'); </code>
+<code>**getAttribute(attribute)**</code>
 
-    - HTTP 클라이언트가 서버에 요청할 때 서버가 샌드백할 데이터의 MIME-type을 Accept로 지정할 수 있다.
+- 어트리뷰트의 값을 취득한다.
+- return: 문자열
+- 모든 브라우저에서 동작한다.
 
-    - 만약 Accept 헤더를 설정하지 않으면 send 메소드가 호출될 때 Accept 헤더가 */ * 로 전송된다.
+```javascript
+ // value 어트리뷰트 값을 취득
+  console.log(input.getAttribute('value')); // hello!
+```
 
-### 2)  Ajax response
 
-#### 	a)  XMLHttpRequest.onreadystatechange
 
-- 해당 메소드는 Response가 클라이언트에 도달하여 발생된 이벤트를 감지하고 콜백 함수를 실행하여 준다.
+<code>**setAttribute(attribute, value)**</code>
 
-- 이때 이벤트는 Request에 어떠한 변화가 발생한 경우 즉  XMLHttpRequest.readyState 프로퍼티가 변경된 경우 발생한다.
+- 어트리뷰트와 어트리뷰트 값을 설정한다.
+- return : undefined
+- 모든 브라우저에서 동작한다.
+
+```javascript
+  // value 어트리뷰트가 존재하지 않으면
+  if (!input.hasAttribute('value')) {
+    // value 어트리뷰트를 추가하고 값으로 'hello!'를 설정
+    input.setAttribute('value', 'hello!');
+  }
+```
+
+
+
+<code>**removeAttribute(attribute)**</code>
+
+- 지정한 어트리뷰트를 제거한다.
+- return: undefined
+- 모든 브라우저에서 동작한다.
+
+```javascript
+ // value 어트리뷰트를 제거
+  input.removeAttribute('value');
+```
+
+
+
+### 3)  HTML  콘텐츠 조작(Manipulation)
+
+- HTML 콘텐츠를 조작하기 위해 아래의 프로퍼티 또는 메소드를 사용할 수 있다. 마크업이 포함된 콘텐츠를 추가하는 행위는 크로스 스크립팅 공격에 취약하므로 주의가 필요하다.
+
+
+
+<code>**textContent**</code>
+
+- **요소의 텍스트 콘텐츠를 취득 또는 변경한다.이때 마크업은 무시된다.** 
+- textContent를 통해 새로운 텍스트를 할당하면 텍스트를 변경할 수 있다.
+- 순수한 텍스트만 지정해야 하며 마크업을 포함시키면 문자열로 인식되어 그대로 출력된다.
+- IE9 이상의 브라우저에서 동작한다.
+
+
+
+<code>**innerText**</code>
+
+- innerText 프로퍼티를 사용하여도 요소의 텍스트 콘텐츠에만 접근할 수 있다.
+
+- 사용하지 않는 것이 좋은데, 그 이유는 아래와 같다.
+
+  - 비표준이다.
+  - CSS에 순종적이다. 예를 들어 CSS에 의해 비표시로 지정되어 있다면 텍스트가 반환되지 않는다.
+  - CSS를 고려해야 하므로 textContent 프로퍼티보다 느리다.
 
   
 
-  #### b)  XMLHttpRequest.readyState
+<code>**innerHTML**</code>
 
-- response가 클라이언트에 도달했는지를 추적할 수 있는 프로퍼티이다.
+- **해당 요소의 모든 자식 요소를 포함하는 모든 콘텐츠를 하나의 문자열로 취득할 수 있다. 이 문자열은 마크업을 포함한다.**
 
-| Value | State            | Description                                           |
-| :---: | :--------------- | :---------------------------------------------------- |
-|   0   | UNSENT           | XMLHttpRequest.open() 메소드 호출 이전                |
-|   1   | OPENED           | XMLHttpRequest.open() 메소드 호출 완료                |
-|   2   | HEADERS_RECEIVED | XMLHttpRequest.send() 메소드 호출 완료                |
-|   3   | LOADING          | 서버 응답 중(XMLHttpRequest.responseText 미완성 상태) |
-|   4   | DONE             | 서버 응답 완료                                        |
+- innerHTML 프로퍼티를 사용하여 마크업이 포함된 새로운 콘텐츠를 지정하면 새로운 요소를 DOM에 추가할 수 있다.
+  - 단, 마크업이 포함된 콘텐츠 추가는 크로스 스크립팅 공격에 취약
+
+```javascript
+const one = document.getElementById('one');
+
+// 마크업이 포함된 콘텐츠 취득
+console.log(one.innerHTML); // Seoul
+
+// 마크업이 포함된 콘텐츠 변경
+one.innerHTML += '<em class="blue">, Korea</em>';
+
+// 마크업이 포함된 콘텐츠 취득
+console.log(one.innerHTML); // Seoul <em class="blue">, Korea</em>
+```
 
 
 
-## 4. Web Server
+### 4) DOM 조작 방식
 
-- 웹서버는 브라우저와 같은 클라이언트로부터 HTTP 요청을 받아들이고 HTML 문서와 같은 웹페이지를 반환하는 컴퓨터 프로그램이다.
+innerHTML 프로퍼티를 사용하지 않고 새로운 콘텐츠를 추가할 수 있는 방법은 DOM을 직접 조작하는 것이다. 한 개의 요소를 추가하는 경우 사용한다.
+
+1.  요소 노드 생성 createElement() 메소드를 사용하여 새로운 요소 노드 생성(createElement() 메소드의 인자로 태그 이름을 전달한다)
+2. 텍스트 노드 생성 createTextNode() 메소드를 사용하여 새로운 텍스트 노드를 생성한다. 경우에 따라 생략될 수 있지만, 생략하는 경우 콘텐츠가 비어있는 요소가 된다.
+3. 생성된 요소를 DOM에 추가 appendChild() 메소드를 사용하여 생성된 노드를 DOM tree에 추가한다. 또는 removeChild() 메소드를 사용하여 DOM tree에서 노드를 삭제할 수도 있다.
 
 
 
-## 5. Load HTML
+<code>**createElement(tagName)**</code>
 
-### 3) Load JSONP
+- **태그 이름을 인자로 전달하여 요소를 생성한다.**
+- return : HTMLElement를 상속받은 객체
+- 모든 브라우저에서 동작한다.
 
-- **동일출처원칙**: 요청에 의해 웹페이지가 전달된 서버와 동일한 도메인의 서버로부터 전달된 데이터는 문제없이 처리할 수 있지만 보안상의 이유로 다른 도메인으로의 요청은 제한된다.
 
-  - **웹서버의 프록시 파일**
 
-    서버에 원격 서버로부터 데이터를 수집하는 별도의 기능을 추가하는 것이다. 이를 프록시라 한다.
+<code>**createTextNode(text)**</code>
 
-  - **JSONP**
+- **텍스트를 인자로 전달하여 텍스트 노드를 생성한다.**
+- return : Text 객체
+- 모든 브라우저에서 동작한다.
 
-    script 태그의 원본 주소에 대한 제약은 존재하지 않는데 이것을 이용해 다른 도메인의 서버에서 데이터를 수집하는 방법이다.
 
-    자신의 서버에 함수를 정의하고 다른 도메인의 서버에 얻고자 하는 데이터를 인수로 하는 함수 호출문을 로드하는 것이다.
 
-    ![comparison_between_ajax_and_jsonp](https://poiemaweb.com/img/comparison_between_ajax_and_jsonp.png)
+<code>**appendChild(Node)**</code>
 
-  - **Cross-Origin Resource Sharing**
+- **인자로 전달한 노드를 마지막 자식 요소로 DOM 트리에 추가한다.**
+- return: 추가한 노드
+- 모든 브라우저에서 동작한다.
 
-    - HTTP 헤더에 추가적으로 정보를 추가하여 브라우저와 서버가 서로 통신해야 한다는 사실을 알게하는 방법이다.
-    - W3C 명세에 포함되어 있지만 최신 브라우저에서만 동작하며 서버에 HTTP 헤더를 설정해 주어야 한다.
+
+
+<code>**removeChild(Node)**</code>
+
+- **인자로 전달한 노드를 DOM 트리에 제거한다.**
+- return : 추가한 노드
+- 모든 브라우저에서 동작한다.
+
+
+
+### 5) insertAdjacentHTML()
+
+<code>**insertAdjacentHTML(position, string)**</code>
+
+- 인자로 전달한 텍스트를 HTML로 파싱하고 그 결과로 생성된 노드를 DOM 트리의 지정된 위치에 삽입한다.
+- 첫번째 인자는 삽입 위치, 두번째 인자는 삽입할 요소를 표현한 문자열이다.
+  - 첫번째 인자로 올 수 있는 값
+    - 'beforebegin'
+    - 'afterbegin'
+    - 'beforeend'
+    - 'afterend'
+- 모든 브라우저에서 동작한다.
+
+![](https://poiemaweb.com/img/insertAdjacentHTML-position.png)
+
+
+
+### 6) innerHTML vs. DOM 조작 방식 vs. insertAdjacentHTML()
+
+
+
+#### **innerHTML**
+
+- 장점
+  - DOM 조작 방식에 비해 빠르고 간편하다.
+  - 간편하게 문자열로 정의한 여러 요소를 DOM에 추가할 수 있다.
+  - 콘텐츠를 취득할 수 있다.
+- 단점
+  - XSS 공격에 취약점이 있기 때문에 사용자로부터 입력받은 콘텐츠(untrusted data: 댓글, 사용자 이름 등)를 추가할 때 주의하여야 한다.
+  - 해당 요소의 내용을 덮어 쓴다. 즉, HTML을 다시 파싱한다. 이것은 비효율적이다.
+
+
+
+#### DOM 조작방식
+
+- 장점
+  - 특정 노드 한 개(노드, 텍스트, 데이터 등)를 DOM에 추가할 때 적합하다.
+
+- 단점
+  - innerHTML보다 느리고 더 많은 코드가 필요하다.
+
+
+
+#### insertAdjacentHTML()
+
+- 장점
+  - 간편하게 문자열로 정의된 여러 요소를 DOM에 추가할 수 있다.
+  - 삽입되는 위치를 선정할 수 있다.
+- 단점
+  - XSS공격에 취약점이 있기 때문에 사용자로부터 입력받은 콘텐츠 (untrusted data: 댓글, 사용자 이름 등)를 추가할 때 주의하여야 한다. 
+
+
+
+---
+
+#### 결론
+
+- innerHTML과 insertAdjacentHTML()은 크로스 스크립팅 공격(XSS: Cross-Site Scripting Attacks)에 취약하다. 따라서 untrusted data의 경우, 주의해야 함
+
+- 텍스트를 추가 또는 변경시 textContent, 새로운 요소의 추가 또는 삭제시에는 DOM 조작 방식을 사용하도록 한다. 
+
+
+
+## 5. style
+
+style 프로퍼티를 사용하면 inline 스타일 선언을 생성한다. **특정 요소에 inline 스타일을 지정하는 경우 사용한다.**
+
+```javascript
+const four = document.getElementById('four');
+
+// inline 스타일 선언을 생성
+four.style.color = 'blue';
+
+// font-size와 같이 '-'으로 구분되는 프로퍼티는 카멜케이스로 변환하여 사용한다.
+four.style.fontSize = '2em';
+```
+
+
+
+-  style 프로퍼티의 값을 취득하려면 window.getComputedStyle을 사용한다.
+- window.getComputedStyle 메소드는 인자로 주어진 요소의 모든 CSS 프로퍼티 값을 반환한다. 
+
+```javascript
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>style 프로퍼티 값 취득</title>
+  <style>
+    .box {
+      width: 100px;
+      height: 50px;
+      background-color: red;
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+  <div class="box"></div>
+  <script>
+    const box = document.querySelector('.box');
+
+    const width = getStyle(box, 'width');
+    const height = getStyle(box, 'height');
+    const backgroundColor = getStyle(box, 'background-color');
+    const border = getStyle(box, 'border');
+
+    console.log('width: ' + width);
+    console.log('height: ' + height);
+    console.log('backgroundColor: ' + backgroundColor);
+    console.log('border: ' + border);
+
+    /**
+     * 요소에 적용된 CSS 프로퍼티를 반환한다.
+     * @param {HTTPElement} elem - 대상 요소 노드.
+     * @param {string} prop - 대상 CSS 프로퍼티.
+     * @returns {string} CSS 프로퍼티의 값.
+     */
+    function getStyle(elem, prop) {
+      return window.getComputedStyle(elem, null).getPropertyValue(prop);
+    }
+  </script>
+</body>
+</html>
+```

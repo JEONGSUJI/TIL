@@ -1,70 +1,58 @@
-# REST(Representational State Transfer) API
-
-REST는 로이 필딩의 2000년 논문에서 처음 소개되었다. 웹이 HTTP의 설계 상 우수성을 제대로 사용하지 못하고 있는 상황을 보고 웹의 장점을 최대한 활용할 수 있는 아키텍쳐로서 REST를 소개하였고 이는 HTTP 프로토콜을 의도에 맞게 디자인하도록 유도하고 있다.
-
-REST의 기본 원칙을 성실히 지킨 서비스 디자인을 **RESTful** 이라고 한다.
+# 동기식 처리 모델 vs 비동기식 처리 모델
 
 
 
-## 1. REST API 중심 규칙
+## 동기식 처리 모델(Synchronous processing model)
 
-1. URI는 정보의 자원을 표현해야 한다.
-   - 리소스명은 동사보다는 명사를 사용한다.
-2. 자원에 대한 행위는 HTTP Method로 표현한다.
+- 직렬적으로 태스크를 수행한다. 즉, 태스크는 순차적으로 실행되며 어떤 작업이 수행 중이면 다음 작업은 대기한다.
+- 서버에서 데이터를 가져와 화면에 표시하는 작업 수행 시, 서버에 데이터를 요청하고 데이터가 응답될 때까지 이후 태스크들은 블로킹된다.
 
-
-
-## 2. HTTP Method
-
-| Method | Action         | 역할                     |
-| :----- | :------------- | :----------------------- |
-| GET    | index/retrieve | 모든/특정 리소스를 조회  |
-| POST   | create         | 리소스를 생성            |
-| PUT    | update all     | **리소스의 전체를 갱신** |
-| PATCH  | update         | **리소스의 일부를 갱신** |
-| DELETE | delete         | 리소스를 삭제            |
+![](https://poiemaweb.com/img/synchronous.png)
 
 
 
-## 3. REST API의 구성
+## 비동기식 처리 모델(Asynchronous processing model, Non-Blocking processing model)
 
-- REST API는 자원, 행위, 표현의 3가지 요소로 구성된다.
-- REST는 자체 표현 구조로 구성되어 REST API만으로 요청을 이해할 수 있다.
+- 병렬적으로 태스크를 수행한다. 즉, 태스크가 종료되지 않은 상태라 하더라도 대기하지 않고 다음 태스크를 실행한다.
+- 서버에서 데이터를 가져와 화면에 표시하는 태스크를 수행할 때, 서버에 데이터를 요청한 이후 서버로부터 데이터가 응답될 때까지 대기하지 않고 즉시 다음 태스크를 수행한다. 이후 서버로부터 데이터가 응답되면 이벤트가 발생하고 이벤트 핸들러가 데이터를 가지고 수행할 태스크를 계속해 수행한다.
 
-| 구성 요소       | 내용                    | 표현 방법             |
-| :-------------- | :---------------------- | :-------------------- |
-| Resource        | 자원                    | HTTP URI              |
-| Verb            | 자원에 대한 행위        | HTTP Method           |
-| Representations | 자원에 대한 행위의 내용 | HTTP Message Pay Load |
+(참고 : DOM 이벤트 핸들러와 Timer 함수(setTimeout, setInterval), Ajax 요청은 비동기식 처리 모델로 동작한다.)
 
 
 
-## 4. REST API EXAMPLE
-
-- #### GET : 리소스에서 조회
-
- <code>$ curl -X GET http://localhost:5000/todos  </code>
+![](https://poiemaweb.com/img/asynchronous.png)
 
 
 
-- #### POST : 리소스에 새로운 것 생성
+```javascript
+function func1() {
+  console.log('func1');
+  func2();
+}
 
- <code> $ curl -X POST http://localhost:5000/todos -H "Content-Type: application/json" -d '{"id": 4, "content": "Angular", "completed": true}'  </code>
+function func2() {
+  setTimeout(function() {
+    console.log('func2');
+  }, 0);
+
+  func3();
+}
+
+function func3() {
+  console.log('func3');
+}
+
+func1();
+```
+
+- 위 예제의 출력 결과는 func1, func3, undefined(완료값), func2이다. 이는 setTimeout 메소드가 비동기 함수이기 때문이다. setTimeout의 콜백함수는 즉시 실행되지 않고 지정 대기 시간만큼 기다리다가 'tick' 이벤트가 발생하면 태스크 큐로 이동한 후 Call Stackd이 비어졌을 때 Call Stack으로 이동되어 실행된다.
+
+![](https://poiemaweb.com/img/settimeout.png)
+
+![작동예시](https://poiemaweb.com/img/event-loop.gif)
 
 
 
-- #### PUT : 특정 리소스의 전체를 갱신
-
-<code> $ curl -X PUT http://localhost:5000/todos/4 -H "Content-Type: application/json" -d '{"id": 4, "content": "React", "completed": false}' </code>
-
-
-
-- #### PATCH : 특정 리소스의 일부를 갱신
-
-<code> $ curl -X PATCH http://localhost:5000/todos/4 -H "Content-Type: application/json" -d '{"completed": true}' </code>
-
-
-
-- #### DELETE : 특정 리소스 삭제
-
-<code> $ curl -X DELETE http://localhost:5000/todos/4 </code>
+> **태스크(task)란?**
+>
+> 자바스크립트의 런타임 환경에서는 처리해야 하는 일

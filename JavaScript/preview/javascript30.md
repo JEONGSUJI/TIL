@@ -1,582 +1,268 @@
-# DOM (Document Object Model)
+# String 래퍼 객체
 
 
 
-## **1. DOM이란?**
+- String 객체는 원시 타입인 문자열을 다룰 때 유용한 프로퍼티와 메소드를 제공하는 래퍼 객체이다.
+- 변수 또는 객체 프로퍼티가 문자열을 값으로 가지고 있다면 String 객체의 별도 생성없이 String 객체의 프로퍼티와 메소드를 사용할 수 있다
 
-- 텍스트 파일로 만들어져 있는 웹 문서(HTML, XML, SVG)를 브라우저에 렌더링하려면 웹 문서를 브라우저가 이해할 수 있는 구조로 메모리에 올려야한다. 브라우저의 렌더링 엔진은 웹 문서를 로드한 후, 파싱하여 웹 문서를 브라우저가 이해할 수 있는 구조로 구성하여 메모리에 적재하는 것을 말한다.
+- **원시 타입이 wrapper 객체의 메소드를 사용할 수 있는 이유**는 원시 타입으로 프로퍼티나 메소드를 호출할 때 원시 타입과 연관된 **wrapper 객체로 일시적으로 변환**되어 프로토타입 객체를 공유하게 되기 때문이다.
 
-- 모든 요소와 요소의 어트리뷰트, 텍스트를 각각의 객체로 만들고 이들 객체 부자 관계를 표현할 수 있는 트리 구조로 구성한 것이다.
-- 자바스크립트를 통해 동적으로 변경할 수 있으며 변경된  DOM은 렌더링에 반영된다.
-- DOM은 호스트 객체로 W3C의 공식 표준이며 플랫폼/프로그래밍 언어 중립적이다.
-- DOM이 담당하는 2가지 기능
-  - HTML 문서에 대한 모델 구성
-    - 브라우저는 HTML 문서를 로드한 후 해당 문서에 대한 모델(객체의 트리로 구성되며 이를 DOM tree라 함)을 메모리에 생성한다.
-  - HTML 문서 내의 각 요소에 접근 및 수정
-    - DOM은 모델 내의 각 객체에 접근하고 수정할 수 있는 프로퍼티와 메소드를 제공한다.
 
-![](https://poiemaweb.com/img/client-server.png)
 
-> **DOM API(Application Programming Interface)**
->
-> 웹 문서의 동적 변경을 위해 DOM은 프로그래밍 언어가 자신에 접근하고 수정할 수 있는 방법을 제공하는데 일반적으로 프로퍼티와 메소드를 갖는 자바스크립트 객체로 제공되는 것을 말한다.
+## 1. String Constructor
 
-
-
-결론: **정적인 웹페이지에 접근하여 동적으로 웹페이지를 변경하기 위한 유일한 방법은 메모리 상에 존재하는 DOM을 변경하는 것이고, 이때 필요한 것이 DOM에 접근하고 변경하는 프로퍼티와 메소드의 집합인 DOM API다.**
-
-
-
-## 2. DOM tree
-
-- 브라우저가 HTML 문서를 로드한 후 파싱하여 생성하는 모델로 객체의 트리로 구조화 되어있어 DOM tree라 부른다.
-
-
-
-![](https://poiemaweb.com/img/dom-tree.png)
-
-
-
-- DOM에서 모든 요소, 어트리뷰트, 텍스트는 하나의 객체이며 Document 객체의 자식이다.
-- 요소의 중첩관계는 객체의 트리로 구조화하여 부자관계를 표현한다.
-- DOM tree의 진입점(Entry point)는 document 객체이며 최종점은 요소의 텍스트를 나타내는 객체이다.
-
-
-
-| DOM tree를 구성하는 노드        |                                                              |
-| ------------------------------- | ------------------------------------------------------------ |
-| 문서노드(Document Node)         | 트리의 최상위에 존재하며 각각 요소, 어트리뷰트, 텍스트 노드에 접근하려면 문서 노드를 통해야 한다. **DOM tree에 접근하기 위한 시작점**이다. |
-| 요소노드(Element Node)          | HTML 요소를 표현한다. HTML 요소는 중첩에 의해 부자 관계를 가지며 이 부자 관계를 통해 정보를 구조화한다. 따라서 **요소노드는 문서의 구조를 서술**한다. 어트리뷰트, 텍스트 노드에 접근하려면 요소 노드를 먼저 찾고 접근해야한다. 모든 요소 노드는 요소별 특성을 표현하기 위해 HTMLElement 객체를 상속한 객체로 구성된다. |
-| 어트리뷰트 노드(Attribute Node) | HTML 요소의 어트리뷰트를 표현한다. 어트리뷰트 노드는 해당 어트리뷰트가 지정된 요소의 자식이 아니라 해당 요소의 일부로 표현된다. 해당 요소 노드를 찾아 접근하면 어트리뷰트를 참조, 수정할 수 있다. |
-| 텍스트 노드(Text Node)          | **HTML 요소의 텍스트를 표현**한다. 텍스트 노드는 요소 노드의 자식이며 자신의 **자식 노드를 가질 수 없다**. **DOM tree의 최종단**이다. |
-
-
-
-- DOM을 통해 웹페이지를 조작하기 위해 필요한 수순
-
-  1) 조작하고자하는 요소를 선택 또는 탐색
-
-  2) 선택된 요소의 콘텐츠 또는 어트리뷰트를 조작 
-
-
-
-## 3. DOM Query / Traversing (요소에의 접근)
-
-
-
-### 1) 하나의 요소 노드 선택(DOM Query)
-
-- <code>**document.getElementById(id)**</code>
-  - **id 어트리뷰트 값으로 요소 노드를 한개 선택한다.** (복수개 선택된 경우, 첫번째 요소만 반환)
-  - return : HTMLElement를 상속받은 객체
-  - 모든 브라우저에서 동작한다.
-
-- <code>**document.querySelector(cssSelector)**</code>
-  - **CSS 셀렉터를 사용하여 요소 노드를 한개 선택한다.** (복수 개 선택된 경우, 첫번째 요소만 반환)
-  - return: HTMLElement를 상속받은 객체
-  - IE8 이상의 브라우저에서 동작
-
-
-
-### 2) 여러 개의 요소 노드 선택 (DOM Query)
-
-- <code>**document.getElementsByClassName(class)**</code>
-
-  - class 어트리뷰트 값으로 요소 노드를 모두 선택한다. 공백으로 구분하여 여러 개의 class를 지정할 수 있다.
-
-  - return : HTMLCollection (live)
-
-    - 반환값이 복수인 경우, HTMLElement의 리스트를 담아 반환하기 위한 객체로 배열과 비슷한 사용법을 가지고 있지만 배열은 아닌 유사배열이다. 
-
-    - 또한 HTMLCollection은 실시간으로 Node의 상태 변경을 반영하기 때문에 loop가 필요한 경우 주의가 필요하다.
-
-      - 해결방법 
-
-        1) 반복문을 역방향으로 돌린다.
-
-        2) while 반복문을 사용한다. 이때 elems에 요소가 남아 있지 않을 때까지 무한반복하기 위해 index는 0으로 고정시킨다.
-
-        3) (권장) HTMLCollection을 배열로 변경한다.
-
-        4) querySelectorAll 메소드를 사용하여 HTMLCollection이 아닌 NodeList(non-live)를 반환하게 한다.
-
-  - IE9 이상의 브라우저에서 동작
-
-  
-
-- <code>**document.getElementsByTagName(tagName)**</code>
-  - 태그명으로 요소 노드를 모두 선택한다.
-  - return: HTMLCollection (live)
-  - 모든 브라우저에서 동작
-
-
-
-- <code>**document.querySelectorAll(selector)**</code>
-  - 지정된 CSS 선택자를 사용하여 요소 노드를 모두 선택한다.
-  - return : NodeList(non-live)
-  - IE8 이상의 브라우저에서 동작
-
-
-
-### 3) DOM Traversing (탐색)
-
-
-
-#### **[부모 노드 관련]**
-
-<code>**parentNode**</code>
-
-- 부모 노드를 탐색한다.
-- return: HTMLElement를 상속받은 객체
-- 모든 브라우저에서 동작
-
-
-
-<code>**firstChild, lastChild**</code>
-
-- 자식 노드를 탐색한다.
-- return : HTMLElement를 상속받은 객체
-- IE9 이상의 브라우저에서 동작
-
-
-
-> **주의사항**
->
-> ```javascript
-> const elem = document.querySelector('ul');
-> 
-> // first Child
-> elem.firstChild.className = 'blue';
-> // last Child
-> elem.lastChild.className = 'blue';
-> ```
->
-> 위 예제는 예상대로 동작하지 않는데, 이유는 <u>IE를 제외한 대부분의 브라우저들은 요소 사이의 공백 또는 줄바꿈 문자를 텍스트 노드로 취급하기 때문</u>이다. 
->
-> ```html
-> <ul>
->     <li id="one" class="red">Seoul</li>
->     <li id="two" class="red">London</li>
->     <li id="three" class="red">Newyork</li>
->     <li id="four">Tokyo</li>
-> </ul>
-> ```
->
-> **이를 회피하기 위한 방법**
->
-> 1)  아래와 같이 HTML의 공백을 제거
->
-> ```html
-> <ul><li
->   id='one' class='red'>Seoul</li><li
->   id='two' class='red'>London</li><li
->   id='three' class='red'>Newyork</li><li
->   id='four'>Tokyo</li></ul>
-> ```
->
-> 2) jQuery:.prev()와 jQueryL:.next()를 사용
->
-> 3) firstElementChild, lastElementChild를 사용 (IE9 이상 정상 작동)
->
-> ```javascript
-> const elem = document.querySelector('ul');
-> 
-> // first Child
-> elem.firstElementChild.className = 'blue';
-> // last Child
-> elem.lastElementChild.className = 'blue';
-> ```
-
-
-
-#### **[자식 노드 관련]**
-
-- <code>**hasChildNodes()**</code>
-  - **자식 노드가 있는지 확인하고 Boolean 값을 반환한다.**
-  - return: Boolean 값
-  - 모든 브라우저에서 동작한다.
-
-
-
-- <code>**childNodes()**</code>
-  - **자식 노드의 컬렉션을 반환한다. 텍스트 요소를 포함한 모든 자식 요소를 반환한다.**
-  - return: NodeList (non-live)
-  - 모든 브라우저에서 동작한다.
-
-
-
-- <code>**children()**</code>
-  - **자식 노드의 컬렉션을 반환한다. 자식 요소 중에서 Element type 요소만을 반환한다.**
-  - return: HTMLCollection (live)
-  - IE9 이상의 브라우저에서 동작
-
-
-
-#### **[형제 노드 관련]**
-
-- <code>**previousSibling, nextSibling**</code>
-  - 형제 노드를 탐색한다. **text node를 포함한 모든 형제 노드를 탐색한다.**
-  - return: HTMLElement를 상속받은 객체
-  - 모든 브라우저에서 동작
-
-
-
-- <code>**previousElementSibling, nextElementSibling**</code>
-  - 형제 노드를 탐색한다. **형제 노드 중에서 Element type 요소만을 탐색한다**
-  - return: HTMLElement를 상속받은 객체
-  - IE9 이상의 브라우저에서 동작
-
-
-
-## 4. DOM Manipulation (조작)
-
-
-
-### 1) 텍스트 노드에의 접근/수정
-
-- 요소의 텍스트는 텍스트 노드에 저장되어 있다. 텍스트 노드에 접근하려면 아래와 같은 수순이 필요하다.
-
-  
-
-  1) 해당 텍스트 노드의 부모 노드를 선택한다. 텍스트 노드는 요소 노드의 자식이다. (nodeName, nodeType을 통해 노드의 정보를 취득할 수 있다.)
-
-  2) firstChild 프로퍼티를 사용하여 텍스트 노드를 탐색한다.
-
-  3) 텍스트 노드의 유일한 프로퍼티(nodeValue)를 이용하여 텍스트를 취득한다.
-
-  4) nodeValue를 이용하여 텍스트를 수정한다.
-
-  
-
-> **nodeValue**
->
-> - 노드의 값을 반환한다.
-> - return: 텍스트 노드의 경우는 문자열, 요소 노드의 경우 null 반환
-> - IE6 이상의 브라우저에서 동작한다.
-
-
-
-### 2) 어트리뷰트 노드에의 접근/수정
-
-- 어트리뷰트 노드를 조작할 때 다음 프로퍼티 또는 메소드를 사용할 수 있다.
-
-
-
-<code>**className**</code>
-
-- **class 어트리뷰트의 값을 취득 또는 변경한다.** className 프로퍼티에 값을 **할당하는 경우, class 어트리뷰트가 존재하지 않으면 class 어트리뷰트를 생성하고 지정된 값을 설정**한다.
-- class 어트리뷰트의 값이 여러 개일 경우, 공백으로 구분된 문자열이 반환되므로 String 메소드 split(' ')를 사용하여 배열로 변경하여 사용한다.
-- 모든 브라우저에서 동작한다.
+- String 객체는 String 생성자 함수를 통해 생성할 수 있다. 이때 전달된 인자는 모두 문자열로 변환된다.
 
 ```javascript
-[...elems].forEach(elem => {
-  // class 어트리뷰트 값을 취득하여 확인
-  if (elem.className === 'red') {
-    // class 어트리뷰트 값을 변경한다.
-    elem.className = 'blue';
-  }
-});
+new String(value);
+```
+
+```javascript
+let strObj = new String(1);
+console.log(strObj);
+
+strObj = new String(undefined);
+console.log(strObj);
+```
+
+- new 연산자를 사용하지 않고 String 생성자 함수를 호출하면 String 객체가 아닌 문자열 리터럴을 반환한다. (이때 형 변환이 발생할 수 있다.)
+
+
+
+## 2. String Property
+
+### 1) String.length
+
+- 문자열 내의 문자 갯수를 반환한다.
+- String 객체는 length 프로퍼티를 소유하고 있으므로 유사 배열 객체이다.
+
+
+
+## 3. String  Method
+
+### 1) String.prototype.charAt(pos:number):string
+
+- 인수로 전달한 index를 사용하여 index에 해당하는 위치의 문자를 반환한다.
+- index는 0 ~ (문자열 길이 -1) 사이의 정수이다.
+- 지정한 index가 문자열의 범위 (0~ (문자열 길이-1)을 벗어난 경우 빈문자열을 반환한다.
+
+
+
+### 2) String.prototype.concat(...strings: string[]):string
+
+- 인수로 전달한 1개 이상의 문자열과 연결하여 새로운 문자열을 반환한다.
+- concat 메소드를 사용하는 것 보다는 <code>+</code>, <code>+=</code> 할당 연산자를 사용하는 것이 성능상 유리하다.
+
+
+
+### 3) String.prototype.indexOf(searchString:string, fromIndex=0): number
+
+- 인수로 전달한 문자 도는 문자열을 대상 문자열에서 검색하여 처음 발견된 곳의 Index를 변환한다. 발견하지 못한 경우 -1을 반환한다.
+
+```javascript
+// searchString - 검색할 문자 또는 문자열
+// [fromIndex=0] - 검색 시작 index (생략할 경우, 0)
+str.indexOf(searchString[, fromeIndex])
 ```
 
 
 
-<code>**classList**</code>
+### 4) String.prototype.lastIndexOf(searchString:string, fromIndex=this.length-1):number
 
-- add, remove, item, toggle, contains, replace 메소드를 제공한다.
-- IE10 이상의 브라우저에서 동작한다.
+- 인수로 전달한 문자 또는 문자열을 대상 문자열에서 검색하여 마지막으로 발견된 곳의 index를 반환한다. 발견하지 못한 경우 -1을 반환한다.
+- 2번째 인수가 전달되면 검색 시작 위치를 fromIndex으로 이동하여 **역방향**으로 검색을 시작한다. 검색 범위는 0 ~ fromIndex며 반환값은 indexOf 메소드와 동일하게 발견된 곳의 Index이다.
 
 ```javascript
-[...elems].forEach(elem => {
-  // class 어트리뷰트 값 확인
-  if (elem.classList.contains('blue')) {
-    // class 어트리뷰트 값 변경한다.
-    elem.classList.replace('blue', 'red');
-  }
-});
+// searchString - 검색할 문자 또는 문자열
+// [fromIndex=this.length-1] - 검색 시작 index (생략할 경우, 문자열 길이 -1 )
+str.lastIndexOf(searchString[, fromIndex])
+```
+
+```javascript
+const str = 'Hello World';s
+
+console.log(str.lastIndexOf('World')); // 6
+console.log(str.lastIndexOf('o', 5)); // 4
+console.log(str.lastIndexOf('o', 8)); // 7
 ```
 
 
 
-<code>**id**</code>
+### 5) String.prototype.replace(searchValue:string | RegExp, replaceValue: string | replacer:(substring: string, ...args: any[]) => string): string): string
 
-- id 어트리뷰트의 값을 취득 또는 변경한다. id 프로퍼티에 값을 할당하는 경우, id 어트리뷰트가 존재하지 않으면 id 어트리뷰트를 생성하고 지정된 값을 설정한다.
-- 모든 브라우저에서 동작한다.
+- 첫번째 인수로 전달한 문자열 또는 정규 표현식을 대상 문자열에서 검색하여 두번째 인수로 전달한 문자열로 대체한다.
+- 첫번째 인자에는 문자열 또는 정규 표현식이 전달되는데, 문자열의 경우 첫번째 검색 결과만이 대체되지만 정규표현식을 사용하면 다양한 방식으로 검색할 수 있다.
+- 원본 문자열은 변경되지 않고 결과가 반영된 새로운 문자열을 반환한다.
+- 검색된 문자열이 여럿 존재할 경우 첫번째로 검색된 문자열만 대체된다.
 
+```javascript
+// searchValue - 검색 대상 문자열 또는 정규 표현식
+// replacer - 치환 문자열 또는 치환 함수
+str.replace(searchValue, replacer)
+```
 
+- 특수한 교체 패턴을 사용할 수 있다. ($& => 검색된 문자열)
 
-<code>**hasAttribute(attribute)**</code>
-
-- 지정한 어트리뷰트를 가지고 있는지 검사한다.
-- return : Boolean
-- IE8 이상의 브라우저에서 동작한다.
-
-```jav
-  // value 어트리뷰트가 존재하지 않으면
-  if (!input.hasAttribute('value')) {
-    // value 어트리뷰트를 추가하고 값으로 'hello!'를 설정
-    input.setAttribute('value', 'hello!');
-  }
+```javascript
+console.log(str.replace('world', '<strong>$&</strong>'));
+// Hello <strong>world</strong>
 ```
 
 
 
-<code>**getAttribute(attribute)**</code>
+### 6) String.prototype.split(separator: string | RegExp, limit?:number): string[]
 
-- 어트리뷰트의 값을 취득한다.
-- return: 문자열
-- 모든 브라우저에서 동작한다.
+- 첫번째 인수로 전달한 문자열 또는 정규표현식을 대상 문자열에서 검색하여 문자열을 구분한 후 분리된 각 문자열로 이루어진 배열을 반환한다.
+- 원본 문자열은 반환되지 않는다.
+- 인수가 없는 경우, 대상 문자열 전체를 단일 요소로 하는 배열을 반환한다.
 
 ```javascript
- // value 어트리뷰트 값을 취득
-  console.log(input.getAttribute('value')); // hello!
+// {string | RegExp} [separator] - 구분 대상 문자열 또는 정규표현식
+// {number} [limit] - 구분 대상수의 한계를 나타내는 정수
+str.split([separator[, limit]])
+```
+
+```javascript
+const str = 'How are you doing?';
+
+console.log(str.split('')) // [ 'How', 'are', 'you', 'doing?' ]
+console.log(str.split(' ', 3)); // [ 'How', 'are', 'you' ]
 ```
 
 
 
-<code>**setAttribute(attribute, value)**</code>
+### 7) String.prototype.substring(start: number, end=this.length): string
 
-- 어트리뷰트와 어트리뷰트 값을 설정한다.
-- return : undefined
-- 모든 브라우저에서 동작한다.
+- 첫번째 인수로 전달한 start 인덱스에 해당하는 문자부터 두번째 인자에 전달된 end 인덱스에 해당하는 문자의 바로 이전문자까지 모두 반환한다.
+- 이때 첫번째 인수 < 두번째 인수의 관계가 성립된다.
+
+![](https://poiemaweb.com/img/substring.png)
 
 ```javascript
-  // value 어트리뷰트가 존재하지 않으면
-  if (!input.hasAttribute('value')) {
-    // value 어트리뷰트를 추가하고 값으로 'hello!'를 설정
-    input.setAttribute('value', 'hello!');
-  }
+// {number} start - 0 ~ 해당문자열 길이 -1 까지의 정수
+// {number} [end=this.length] - 0 ~ 해당문자열 길이까지의 정수
+str.substring(start[, end])
 ```
 
 
 
-<code>**removeAttribute(attribute)**</code>
-
-- 지정한 어트리뷰트를 제거한다.
-- return: undefined
-- 모든 브라우저에서 동작한다.
+- 첫번째 인수 > 두번째 인수 : 두 인수는 교환된다.
 
 ```javascript
- // value 어트리뷰트를 제거
-  input.removeAttribute('value');
+const str = 'Hello World';
+console.log(str.substring(4, 1)); // ell
+// console.log(str.substring(1, 4)); // ell 와 동일
+```
+
+- 두번째 인수가 생략된 경우 : 해당 문자열의 끝까지 반환한다.
+
+```javascript
+console.log(str.substring(4)); // o World
+```
+
+- 인수 < 0 또는 NaN인 경우 : 0으로 취급된다.
+
+```javascript
+console.log(str.substring(-2)); // Hello World
+```
+
+- 인수 > 문자열의 길이(str.length) : 인수는 문자열의 길이(str.length)으로 취급된다.
+
+```javascript
+console.log(str.substring(1, 12)); // ello World
+console.log(str.substring(11)); // ''
+console.log(str.substring(20)); // ''
+console.log(str.substring(0, str.indexOf(' '))); // 'Hello'
+console.log(str.substring(str.indexOf(' ') + 1, str.length)); // 'World'
 ```
 
 
 
-### 3)  HTML  콘텐츠 조작(Manipulation)
+### 8)  String.prototype.slice(start?: number, end?: number): string
 
-- HTML 콘텐츠를 조작하기 위해 아래의 프로퍼티 또는 메소드를 사용할 수 있다. 마크업이 포함된 콘텐츠를 추가하는 행위는 크로스 스크립팅 공격에 취약하므로 주의가 필요하다.
-
-
-
-<code>**textContent**</code>
-
-- **요소의 텍스트 콘텐츠를 취득 또는 변경한다.이때 마크업은 무시된다.** 
-- textContent를 통해 새로운 텍스트를 할당하면 텍스트를 변경할 수 있다.
-- 순수한 텍스트만 지정해야 하며 마크업을 포함시키면 문자열로 인식되어 그대로 출력된다.
-- IE9 이상의 브라우저에서 동작한다.
-
-
-
-<code>**innerText**</code>
-
-- innerText 프로퍼티를 사용하여도 요소의 텍스트 콘텐츠에만 접근할 수 있다.
-
-- 사용하지 않는 것이 좋은데, 그 이유는 아래와 같다.
-
-  - 비표준이다.
-  - CSS에 순종적이다. 예를 들어 CSS에 의해 비표시로 지정되어 있다면 텍스트가 반환되지 않는다.
-  - CSS를 고려해야 하므로 textContent 프로퍼티보다 느리다.
-
-  
-
-<code>**innerHTML**</code>
-
-- **해당 요소의 모든 자식 요소를 포함하는 모든 콘텐츠를 하나의 문자열로 취득할 수 있다. 이 문자열은 마크업을 포함한다.**
-
-- innerHTML 프로퍼티를 사용하여 마크업이 포함된 새로운 콘텐츠를 지정하면 새로운 요소를 DOM에 추가할 수 있다.
-  - 단, 마크업이 포함된 콘텐츠 추가는 크로스 스크립팅 공격에 취약
+-  String.prototype.substring과 동일하다. 
+- 단, String.prototype.slice는 음수의 인수를 전달할 수 있다. 
 
 ```javascript
-const one = document.getElementById('one');
+const str = 'hello world';
 
-// 마크업이 포함된 콘텐츠 취득
-console.log(one.innerHTML); // Seoul
+// 인수 < 0 또는 NaN인 경우 : 0으로 취급된다.
+console.log(str.substring(-5)); // 'hello world'
+// 뒤에서 5자리를 잘라내어 반환한다.
+console.log(str.slice(-5)); // 'world'
 
-// 마크업이 포함된 콘텐츠 변경
-one.innerHTML += '<em class="blue">, Korea</em>';
+// 2번째부터 마지막 문자까지 잘라내어 반환
+console.log(str.substring(2)); // llo world
+console.log(str.slice(2)); // llo world
 
-// 마크업이 포함된 콘텐츠 취득
-console.log(one.innerHTML); // Seoul <em class="blue">, Korea</em>
+// 0번째부터 5번째 이전 문자까지 잘라내어 반환
+console.log(str.substring(0, 5)); // hello
+console.log(str.slice(0, 5)); // hello
 ```
 
 
 
-### 4) DOM 조작 방식
+### 9) String.prototype.toLowerCase(): string
 
-innerHTML 프로퍼티를 사용하지 않고 새로운 콘텐츠를 추가할 수 있는 방법은 DOM을 직접 조작하는 것이다. 한 개의 요소를 추가하는 경우 사용한다.
-
-1.  요소 노드 생성 createElement() 메소드를 사용하여 새로운 요소 노드 생성(createElement() 메소드의 인자로 태그 이름을 전달한다)
-2. 텍스트 노드 생성 createTextNode() 메소드를 사용하여 새로운 텍스트 노드를 생성한다. 경우에 따라 생략될 수 있지만, 생략하는 경우 콘텐츠가 비어있는 요소가 된다.
-3. 생성된 요소를 DOM에 추가 appendChild() 메소드를 사용하여 생성된 노드를 DOM tree에 추가한다. 또는 removeChild() 메소드를 사용하여 DOM tree에서 노드를 삭제할 수도 있다.
+- 대상 문자열의 모든 문자를 소문자로 변경한다. 
 
 
 
-<code>**createElement(tagName)**</code>
+### 10) String.prototype.toUpperCase(): string 
 
-- **태그 이름을 인자로 전달하여 요소를 생성한다.**
-- return : HTMLElement를 상속받은 객체
-- 모든 브라우저에서 동작한다.
+- 대상 문자열의 모든 문자를 대문자로 변경한다. 
 
 
 
-<code>**createTextNode(text)**</code>
+### 11) String.prototype.trim(): string
 
-- **텍스트를 인자로 전달하여 텍스트 노드를 생성한다.**
-- return : Text 객체
-- 모든 브라우저에서 동작한다.
-
-
-
-<code>**appendChild(Node)**</code>
-
-- **인자로 전달한 노드를 마지막 자식 요소로 DOM 트리에 추가한다.**
-- return: 추가한 노드
-- 모든 브라우저에서 동작한다.
-
-
-
-<code>**removeChild(Node)**</code>
-
-- **인자로 전달한 노드를 DOM 트리에 제거한다.**
-- return : 추가한 노드
-- 모든 브라우저에서 동작한다.
-
-
-
-### 5) insertAdjacentHTML()
-
-<code>**insertAdjacentHTML(position, string)**</code>
-
-- 인자로 전달한 텍스트를 HTML로 파싱하고 그 결과로 생성된 노드를 DOM 트리의 지정된 위치에 삽입한다.
-- 첫번째 인자는 삽입 위치, 두번째 인자는 삽입할 요소를 표현한 문자열이다.
-  - 첫번째 인자로 올 수 있는 값
-    - 'beforebegin'
-    - 'afterbegin'
-    - 'beforeend'
-    - 'afterend'
-- 모든 브라우저에서 동작한다.
-
-![](https://poiemaweb.com/img/insertAdjacentHTML-position.png)
-
-
-
-### 6) innerHTML vs. DOM 조작 방식 vs. insertAdjacentHTML()
-
-
-
-#### **innerHTML**
-
-- 장점
-  - DOM 조작 방식에 비해 빠르고 간편하다.
-  - 간편하게 문자열로 정의한 여러 요소를 DOM에 추가할 수 있다.
-  - 콘텐츠를 취득할 수 있다.
-- 단점
-  - XSS 공격에 취약점이 있기 때문에 사용자로부터 입력받은 콘텐츠(untrusted data: 댓글, 사용자 이름 등)를 추가할 때 주의하여야 한다.
-  - 해당 요소의 내용을 덮어 쓴다. 즉, HTML을 다시 파싱한다. 이것은 비효율적이다.
-
-
-
-#### DOM 조작방식
-
-- 장점
-  - 특정 노드 한 개(노드, 텍스트, 데이터 등)를 DOM에 추가할 때 적합하다.
-
-- 단점
-  - innerHTML보다 느리고 더 많은 코드가 필요하다.
-
-
-
-#### insertAdjacentHTML()
-
-- 장점
-  - 간편하게 문자열로 정의된 여러 요소를 DOM에 추가할 수 있다.
-  - 삽입되는 위치를 선정할 수 있다.
-- 단점
-  - XSS공격에 취약점이 있기 때문에 사용자로부터 입력받은 콘텐츠 (untrusted data: 댓글, 사용자 이름 등)를 추가할 때 주의하여야 한다. 
-
-
-
----
-
-#### 결론
-
-- innerHTML과 insertAdjacentHTML()은 크로스 스크립팅 공격(XSS: Cross-Site Scripting Attacks)에 취약하다. 따라서 untrusted data의 경우, 주의해야 함
-
-- 텍스트를 추가 또는 변경시 textContent, 새로운 요소의 추가 또는 삭제시에는 DOM 조작 방식을 사용하도록 한다. 
-
-
-
-## 5. style
-
-style 프로퍼티를 사용하면 inline 스타일 선언을 생성한다. **특정 요소에 inline 스타일을 지정하는 경우 사용한다.**
+-  대상 문자열 양쪽 끝에 있는 공백 문자를 제거한 문자열을 반환한다. 
 
 ```javascript
-const four = document.getElementById('four');
+const str = '   foo  ';
 
-// inline 스타일 선언을 생성
-four.style.color = 'blue';
+console.log(str.trim()); // 'foo'
 
-// font-size와 같이 '-'으로 구분되는 프로퍼티는 카멜케이스로 변환하여 사용한다.
-four.style.fontSize = '2em';
+// String.prototype.replace
+console.log(str.replace(/\s/g, ''));   // 'foo'
+console.log(str.replace(/^\s+/g, '')); // 'foo  '
+console.log(str.replace(/\s+$/g, '')); // '   foo'
+
+// String.prototype.{trimStart,trimEnd} : Proposal stage 3
+console.log(str.trimStart()); // 'foo  '
+console.log(str.trimEnd());   // '   foo'
 ```
 
 
 
--  style 프로퍼티의 값을 취득하려면 window.getComputedStyle을 사용한다.
-- window.getComputedStyle 메소드는 인자로 주어진 요소의 모든 CSS 프로퍼티 값을 반환한다. 
+### 12) String.prototype.repeat(count: number): string 
+
+- 인수로 전달한 숫자만큼 반복해 연결한 새로운 문자열을 반환한다.
+- count가 0이면 빈 문자열을 반환하고 음수면 RangeError를 발생시킨다.
 
 ```javascript
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>style 프로퍼티 값 취득</title>
-  <style>
-    .box {
-      width: 100px;
-      height: 50px;
-      background-color: red;
-      border: 1px solid black;
-    }
-  </style>
-</head>
-<body>
-  <div class="box"></div>
-  <script>
-    const box = document.querySelector('.box');
+console.log('abc'.repeat(2));   // 'abcabc'
+console.log('abc'.repeat(2.5)); // 'abcabc' (2.5 → 2)
+console.log('abc'.repeat(-1));  // RangeError: Invalid count value
+```
 
-    const width = getStyle(box, 'width');
-    const height = getStyle(box, 'height');
-    const backgroundColor = getStyle(box, 'background-color');
-    const border = getStyle(box, 'border');
 
-    console.log('width: ' + width);
-    console.log('height: ' + height);
-    console.log('backgroundColor: ' + backgroundColor);
-    console.log('border: ' + border);
 
-    /**
-     * 요소에 적용된 CSS 프로퍼티를 반환한다.
-     * @param {HTTPElement} elem - 대상 요소 노드.
-     * @param {string} prop - 대상 CSS 프로퍼티.
-     * @returns {string} CSS 프로퍼티의 값.
-     */
-    function getStyle(elem, prop) {
-      return window.getComputedStyle(elem, null).getPropertyValue(prop);
-    }
-  </script>
-</body>
-</html>
+### 13) String.prototype.includes(searchString: string, position?: number): boolean
+
+-  인수로 전달한 문자열이 포함되어 있는지를 검사하고 결과를 불리언 값으로 반환한다. 
+- 두번째 인수는 옵션으로 검색할 위치를 나타내는 정수이다. 
+
+```javascript
+const str = 'hello world';
+
+console.log(str.includes('hello')); // true
+console.log(str.includes(' '));     // true
+console.log(str.includes('wo'));    // true
+console.log(str.includes('wow'));   // false
+console.log(str.includes(''));      // true
+console.log(str.includes());        // false
+
+// String​.prototype​.indexOf 메소드로 대체할 수 있다.
+console.log(str.indexOf('hello')); // 0
 ```
