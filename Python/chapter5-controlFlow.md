@@ -197,6 +197,14 @@ if is_break is False:
 
 매 순회마다 for문의 항목으로 tuple이 제공됨
 
+zip으로 묶은 시퀀스들 중, 가장 짧은 시퀀스가 완료되면 순회가 종료된다.
+
+zip을 사용하면 여러 시퀀스로부터 튜플을 만들 수 있다.
+
+zip으로 반환되는 것은 리스트가 아닌 zip클래스 형태의 iterable 객체이기 때문에, 리스트 형태로 사용하려면 list()함수를 사용해준다.
+
+dict()함수를 사용할 경우 딕셔너리 객체가 만들어지게 된다.
+
 ```python
 fruits = ['apple', 'banana', 'melon']
 colors = ['red', 'yellow'. 'green', 'purple']
@@ -205,6 +213,212 @@ for fruit, color in zip(fruits, colors):
 ```
 
 
+
+#### 숫자 시퀀스 생성 (range)
+
+range()함수는 특정 범위의 숫자 스트림 데이터를 반환한다.
+
+```python
+range(start, stop, step)
+```
+
+
+
+#### while문 (반복문)
+
+for문과 유사하나, while은 조건이 참인 경우 계속해서 반복한다. 따라서 무한 루프를 돌 것이 아니면 언젠가 끝나는 조건을 넣어줘야한다.
+
+```python
+while 조건:
+    조건이 참인 경우 실행
+    조건이 거짓이 될 경우까지 계속해서 반복
+```
+
+
+
+#### 컴프리헨션(Comprehension)
+
+함축 또는 내포를 말한다.
+
+iterable한 객체로부터 파이썬의 자료구조를 만드는 방법이다. 가독성과 사용성에서 이득을 얻을 수 있는 경우 항상 사용해준다.
+
+
+
+##### 리스트 컴프리헨션
+
+```python
+[표현식 for 항목 in iterable객체]
+```
+
+만약, range와 for문을 사용할 경우 [1,2,3,4,5]를 만드는 방법
+
+```python
+number = []
+for item in range(1,6):
+    numbers.append(item)
+```
+
+리스트 컴프리헨션을 사용할 경우 [1,2,3,4,5]를 만드는 방법
+
+```python
+[item for item in range(1,6)]
+```
+
+
+
+실습) 만약 각 item에 2배의 값을 할당하고 싶다면?
+
+```python
+[item*2 for item in range(1,6)]
+```
+
+
+
+실습) 만약 1~5중 짝수만 해당하는 리스트를 만들고 싶다면?
+
+```python
+result = [item for item in range(1, 6) if item % 2 == 0]
+```
+
+
+
+##### 리스트 컴프리헨션의 중첩
+
+```python
+for color in colors:
+    for fruit in fruits:
+        result.append((color,fruit))
+        
+result
+```
+
+```python
+[(color, fruit) for color in colors for fruit in fruits]
+```
+
+
+
+##### 셋 컴프리헨션
+
+```python
+{표현식 for 표현식 in iterable객체}
+```
+
+
+
+##### 딕셔너리 컴프리헨션
+
+```python
+{key: value for key, value in [('apple', '사과'), ('banana', '바나나')]}
+```
+
+
+
+#### 실습코드
+
+for문을 2개 중첩하여 (0,0), (0,1), (0,2), (0,3), (1,0), (1,1)..... (6,3)까지 출력되는 반복문을 구현한다.
+
+```python
+# 방법 1
+for i in range(0,7):
+    for j in range(0,4):
+        print((i, j)) # 이건 tuple 객체가 출력된 것이다.
+       
+# 방법 2
+for i in range(7):
+    for j in range(4):
+        print(f'({i}, {j})')  # 문자열로 출력된 것이다.
+```
+
+
+
+리스트 컴프리헨션을 중첩하여 위 결과를 갖는 리스트를 생성한다.
+
+```python
+[(i,j) for i in range(7) for i in range(4)]
+```
+
+
+
+위 두 실습문제의 반복문에서 첫번째 문제는 튜플의 첫 번째 항목이 짝수일때만 출력하도록, 두번째 문제는 첫 번째 항목이 짝수일때만 리스트의 원소로 추가한다.
+
+```python
+# 방법 1
+for i in range(7):
+    for j in range(4):
+        if i % 2 == 0:
+            print((i, j))
+            
+# 방법 2
+for i in range(0,7,2):
+    for j in range(4):
+        if i % 2 == 0:
+            print((i, j))
+```
+
+```python
+[(i,j) for i in range(7) for j in range(4) if i % 2 == 0]
+```
+
+
+
+1000에서 2000까지의 숫자 중, 홀수의 합을 구해본다.
+
+```python
+result = 0
+for i in range(1000, 2001):
+    if(i % 2 != 0):
+        result += i
+        
+result
+```
+
+
+
+리스트 컴프리헨션을 사용하여 구구단 결과 문자열의 리스트를 만들고, 해당 리스트를 for문을 사용해 구구단 형태로 나오도록 출력해본다.
+
+조건 1) 구구단 결과 문자열은 '3 x 7 = 21'과 같은 형태를 갖도록 한다
+
+```python
+[f'{i} x {j} = {i*j}' for i in range(2,10) for j in range(1,10)]
+```
+
+조건 2) 각 단마다 한 번 더 줄바꿈을 넣어준다.
+
+```python
+sample = []
+
+for i in range(2,10):
+    sample.append(f'---{i}단---')
+    for j in range(1,10):
+        sample.append(f'{i} * {j} = {i*j}')
+
+sample
+```
+
+```python
+result = [f'{i} x {j} = {i*j}' for i in range(2,10) for j in range(1,10)]
+
+loop_count = 0;
+for item in result:
+    if loop_count % 9 == 0:
+        print(f'{loop_count // 9 + 2}단')
+    print(item)
+    loop_count += 1
+```
+
+
+
+1에서 99까지의 정수 중, 7의 배수이거나 9의 배수인 정수인 리스트를 생성한다. 단, 7의 배수이며 9의 배수인 수는 한 번만 추가되어야 한다.
+
+```python
+for i in range(1,100):
+    if i % 7 == 0 or i % 9 == 0:
+        print(i)
+        
+# 리스트 컴프리헨션 방식
+[i for i in range(1,100) if i % 7 == 0 or i % 9 == 0]
+```
 
 
 
@@ -230,3 +444,26 @@ a = '안녕'
 is는 객체 자체를 비교하고, ==은 두 객체가 서로 달라도 두 객체가 가진 값이 같은지 비교한다
 
 is는 객체의 비교, 값을 비교하는 !=나 ==보다 연산에 이득
+
+
+
+#### iterable
+
+```python
+gen_5 = (x for x in range(5))
+list_5 = [x for x in range(5)]
+```
+
+위 두 코드를 비교해보자.
+
+두 코드는 for~in 문으로 모두 순회가 되는 코드이다.
+
+하지만 gen_5는 인덱스 연산이 되지 않고, list_5는 인덱스 연산이 가능하다.
+
+
+
+gen_5와 같은 경우를 제네레이터라고 부른다.
+
+반복가능한데 제네레이터와 반복가능한데 시퀀스인 것은 차이가 있다. 
+
+반복가능한데 시퀀스인 것은 이미 메모리에 다 가지고 있는 반면 제네레이터는 메모리상에 데이터를 가지고 있는 것이 아니라 앞으로 어떤 데이터를 생성할 것인지에 대한 규칙만을 가지고 있다.
