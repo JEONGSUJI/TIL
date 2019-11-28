@@ -111,15 +111,114 @@ student('hanyeong.lee', 31)
 
 ```python
 def return_list(value, result=[]):
-    # 1. return_list(value)
-    # 1개의 value를 받으며 호출
-    # 2. return_list(value, result)
-    # value와 list를 받아서 호출
-    
-    # result라는 list에 value를 추가해서
+
     result.append(value)
-    
-    # result list를 리턴
     return result
+
+return_list(apple) // ['apple']
+return_list(melon) // ['apple', 'melon']
+```
+
+함수가 실행되는 시점에 기본 매개변수값을 계산하기 위해, 아래와 같이 바꿔준다.
+
+```python
+def return_list(value, result=None):
+    if result is None:
+        result = []
+	result.append(value)
+    return result
+
+return_list(apple) // ['apple']
+return_list(melon) // ['melon']
+```
+
+
+
+#### 위치인자 묶음
+
+함수에 위치인자로 주어진 변수들의 묶음은 매개변수명으로 사용할 수 있다.
+
+관용적으로 ***args**를 사용한다.
+
+출력은 튜플형태로 정의되어 출력된다.
+
+```python
+def print_args(*args):
+    print(args)
+    
+print_args(1,2,3,4,'a') // (1,2,3,4,'a') 
+```
+
+
+
+#### 키워드인자 묶음
+
+함수에 키워드인자로 주어진 변수들의 묶음은 매개변수명으로 사용할 수 있다. 관용적으로**<code>* *kwargs</code>**를 사용한다.
+
+```python
+def print_kwargs(**kwargs):
+    print(kwargs)
+    
+print_kwargs(a='apple', b='banana') // {'a': 'apple', 'b': 'banana'}
+```
+
+
+
+##### 위치인자 묶음과 키워드인자 묶음을 함께 쓸 수 있다.
+
+```python
+def print_all_args(*args, **kwargs):
+    print(args)
+    print(kwargs)
+
+print_all_args(2,3,4,'a', apple='사과') // (2, 3, 4, 'a') {'apple': '사과'}
+```
+
+
+
+#### docstring
+
+함수를 정의한 문서 역할을 한다. 함수 정의 후 몸체의 시작부분에 문자열로 작성하며, 여러줄로도 작성 가능하다.
+
+```python
+def print_args(*args):
+... 'Print positional arguments'
+    print(args)
+    
+help(print_args)
+```
+
+
+
+#### 함수를 인자로 전달
+
+파이썬에서는 함수 역시 다른 객체와 동등하게 취급되므로, 함수에서 인자로 함수를 전달, 실행, 리턴하는 형태로 프로그래밍이 가능하다.
+
+
+
+실습) 'call func'를 출력하는 함수를 정의하고, 함수를 인자로 받아 실행하는 함수를 정의하여 첫 번째에 정의한 함수를 인자로 전달해 실행해보자. 
+
+```python
+def call_func():
+    print('call func')
+    
+def sam(f):
+    f()
+    
+sam(call_func) // call func
+```
+
+
+
+#### 내부 함수
+
+함수 안에서 또 다른 함수의 정의해 사용할 수 있다.
+
+실습) 문자열 인자를 하나 전달받는 함수를 만들고, 해당 함수 내부에 전달받은 문자열을 대문자화해서 리턴해주는 내부 함수를 구현한다. 문자열을 전달받는 함수는 내부함수를 실행한 결과를 리턴하도록 한다. 
+
+```python
+def string(str):
+    def UpperCase(str):
+        return str.uppercase
 ```
 
