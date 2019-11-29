@@ -21,7 +21,7 @@ def 함수명(매개변수[parameters]):
 # 실행 시 'call funtion!'을 print하는 함수 정의
 def call_function():
     print('call function!')
-    
+     
 # 함수 자체는 function객체를 참조하는 변수
 call_function // <function __main__.call_function()>
 
@@ -214,11 +214,33 @@ sam(call_func) // call func
 
 함수 안에서 또 다른 함수의 정의해 사용할 수 있다.
 
+
+
 실습) 문자열 인자를 하나 전달받는 함수를 만들고, 해당 함수 내부에 전달받은 문자열을 대문자화해서 리턴해주는 내부 함수를 구현한다. 문자열을 전달받는 함수는 내부함수를 실행한 결과를 리턴하도록 한다. 
 
 ```python
 def string(str):
-    def UpperCase(str):
+    def upper():
         return str.uppercase
+    return upper()
+```
+
+
+
+#### 스코프(영역)
+
+파이썬에서는 코드 작성 시, 각 함수마다 독립적인 스코프(영역)을 가진다.
+
+메인 프로그램(현재 동작하는 프로그램의 최상위 위치)의 영역은 전역 영역(Global Scope라고 하며, 전역 스코프 내부에서 독립적인 영역을 갖고 있는 경우에는 지역 영역(Local scope)라고 부른다.
+
+```python
+# 자신의 스코프에서 찾지 못한 변수는, 자신보다 상위 스코프에서 찾는다
+champion = 'Lux'
+
+def show_global_champion():
+    print(f'show_global_champion: {champion}')
+    
+show_global_champion() // show_global_champion: Lux
+print(champion) // Lux
 ```
 
