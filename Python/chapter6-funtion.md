@@ -244,3 +244,236 @@ show_global_champion() // show_global_champion: Lux
 print(champion) // Lux
 ```
 
+각 영역에 해당하는 데이터들은 `locals()`함수를 사용해 확인 할 수 있으며, 전역 영역의 데이터들은 `globals()`함수를 사용한다. 
+
+
+
+#### 스코핑 롤
+
+스코프는 지역(Local), 전역(Global)외에도 내장(Built-in)영역이 존재한다.
+
+내장영역이 가장 바깥, 그 내부에 전역, 그 내부에 지역 순으로 정의된다.
+
+분리된 영역에서, 외부 영역에서는 내부 영역의 데이터를 사용할 수 없지만 내부 영역에서는 자신의 외부 영역에 있는 데이터를 참조할 수 있다. (반대의 경우에는 함수의 인자로 데이터를 전달한다) 
+
+
+
+#### 내장 함수와 내장 영역
+
+`print`, `dict`등 지정하지 않고 사용했던 내장 함수들은 위 스코핑 룰의 내장 스코프에 존재하는 함수들이다.
+
+전역스코프의 `__builtin__`변수에 할당되어 있으며, 전역 스코프에서는 해당 변수의 내부를 참조할 수 있도록 파이썬이 시작될 때 자동으로 처리된다.
+
+확인시 `dir`함수를 사용하며, `dir`함수는 해당 객체가 사용 가능한 속성 및 함수들을 리스트 형태로 나타내준다.
+
+
+
+#### 로컬 스코프에서 글로벌 스코프의 변수를 사용
+
+```python
+champion = 'Lux'
+
+def change_global_champion():
+    champion = 'Ahri'
+    print('after change_global_champion : {}'.format(champion))
+
+change_global_champion()
+print('print global champion : {}'.format(champion))
+```
+
+이 경우, 위의 `show_global_champion`함수와는 다르게 `change_global_champion`함수는 `champion`변수에 새로운 값을 대입한다.
+
+만약 로컬 스코프에서 글로벌 스코프의 변수를 변경해야 한다면, 해당 변수가 로컬 스코프에 생성되는 것이 아닌 글로벌 영역에 이미 존재하는 값을 사용함을 명시해주어야 한다.
+
+```python
+champion = 'Lux'
+
+def change_global_champion():
+    global champion
+    champion = 'Ahri'
+    print('after change_global_champion : {}'.format(champion))
+
+change_global_champion()
+print('print global champion : {}'.format(champion))
+```
+
+파이썬에서는 한 스코프에서 동일한 이름을 가진 두 스코프의 변수를 사용할 수 없음을 기억해야 한다.
+
+
+
+#### 내부함수에서의 로컬 스코프 (nonlocal)
+
+```python
+champion = 'Lux'
+
+def local1():
+    champion = 'Ahri'
+    print('local1 locals() : {}'.format(locals()))
+
+    def local2():
+        champion = 'Ezreal'
+        print('local2 locals() : {}'.format(locals()))
+    local2()
+
+print('global locals() : {}'.format(locals()))
+local1()
+```
+
+로컬 스코프 내부에는 또 다른 로컬 스코프가 존재할 수 있다.
+
+전역 스코프가 아닌, 자신의 바로 바깥 영역의 로컬 스코프(자신보다 한 단계 위의 로컬 스코프)의 데이터를 참조하고자 한다면, `nonlocal`키워드를 사용한다.
+
+```python
+champion = 'Lux'
+
+def local1():
+    champion = 'Ahri'
+    print('local1 locals() : {}'.format(locals()))
+
+    def local2():
+        nonlocal champion
+        champion = 'Ezreal'
+        print('local2 locals() : {}'.format(locals()))
+    local2()
+    print('local1 locals() : {}'.format(locals()))
+
+print('global locals() : {}'.format(locals()))
+local1()
+```
+
+
+
+#### global키워드와 인자(argument)전달의 차이
+
+##### 인자로 전달한 경우
+
+```python
+global_level = 100
+def level_add(value):
+    value += 30
+    print(value)
+
+level_add(global_level)
+print(global_level)
+```
+
+
+
+##### global키워드를 사용한 경우
+
+```python
+global_level = 100
+def level_add():
+    global global_level
+    global_level += 30
+    print(global_level)
+
+level_add()
+print(global_level)
+```
+
+인자로 전달한 경우, 같은 객체를 가리키는 글로벌 변수 `global_level`과 매개변수 `value`가 존재한다.
+이 때, 매개변수인 `value`의 값을 변경하는 것은 `global_level`에는 영향을 주지 않는다.
+
+global키워드의 경우 둘은 같은 변수이다.
+
+하지만 리스트 변수가 전달된다면? global keyword를 사용하지 않아도 바뀐다. 
+
+```python
+global_list = []
+
+def add_item(target_list)
+	target_list.append('ASDF')
+    
+print(global_list)
+add_item(global_list)
+print(global_list)
+```
+
+
+
+#### 람다함수
+
+한 줄 짜리 표현식으로 이루어지며, 반복문이나 조건문 등의 제어문은 포함될 수 없다.
+
+또한, 함수이지만 정의/호출이 나누어져 있지 않으며 표현식 자체가 바로 호출된다.
+
+람다함수는 이름이 없다.
+
+```python
+lambda <매개변수> : <표현식>
+```
+
+```python
+# 함수의 정의
+>>> def multi(x):
+...   return x*x
+... 
+
+# 함수의 호출
+>>> multi(5)
+25
+
+# 람다함수의 사용
+>>> (lambda x : x*x)(5)
+25
+
+# 람다함수를 사용해 함수 정의
+>>> f = lambda x : x*x
+>>> f(5)
+25
+```
+
+
+
+#### 람다함수의 사용
+
+```python
+import string
+>>> for char in string.ascii_lowercase:
+...   if char > 'i':
+...     print(char.upper())
+...   else:
+...     print(char)
+>>> for char in string.ascii_lowercase:
+...   print((lambda x : x.upper() if x > 'i' else x)(char))
+```
+
+```python
+>>> for char in string.ascii_lowercase:
+...   print((lambda x : x.upper() if x > 'i' else x)(char))
+```
+
+
+
+#### 클로져 (Closure)
+
+함수가 정의된 환경을 말하며, 파이썬 파일이 여러개일 경우 각 파일은 하나의 `모듈`역할을 하고, 각 `모듈`은 독립적인 환경을 가진다.
+
+독립된 환경은 각자의 영역을 전역 영역으로 사용한다.
+
+
+
+**closure/module_a.py**
+
+```
+level = 100
+def print_level():
+    print(level)
+```
+
+**closure/module_b.py**
+
+```
+import module_a
+level = 50
+def print_level():
+    print(level)
+    
+module_a.print_level()
+print_level()
+```
+
+`python module_b.py`로 `module_b`를 실행한다.
+
+함수의 전역 영역은 해당 함수가 정의된 모듈의 전역 영역으로, 전역변수는 모듈의 영역에 영향을 받는다.
