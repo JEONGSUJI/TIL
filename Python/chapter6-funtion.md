@@ -532,7 +532,7 @@ def print_int(value):
 
 여러 함수에 대해 같은 기능을 추가할 경우, 데코레이터를 사용한다.
 
-```
+```python
 def print_debug(f):
     def inner_function(*args, **kwargs):
         print('args :', args)
@@ -542,9 +542,11 @@ def print_debug(f):
     return inner_function
 ```
 
+
+
 데코레이터함수(인자로 전달할 함수) 형태로도 사용이 가능하지만, 데코레이터를 사용할 경우에는 함수 위에 데코레이터를 추가해서 사용가능하다.
 
-```
+```python
 @print_debug
 def any_function():
     pass
@@ -558,14 +560,23 @@ def any_function():
 
 #### 제네레이터 (generator)
 
-제네레이터는 함수는 파이썬의 시퀀스 데이터를 생성하는데 사용된다. 실제 시퀀스 데이터와 다른 점은, 시퀀스 전체를 가지고 있는 것이 아니라 시퀀스 데이터를 생성하기 위한 어떠한 루틴만을 가지고 있는 것이다.
-이 방식을 택했을 때의 장점은, 전체 크기만큼의 메모리를 가지고 있는 시퀀스 데이터와는 달리 메모리를 적게 사용할 수 있다.
+제네레이터는 함수는 파이썬의 시퀀스 데이터를 생성하는데 사용된다.
 
-제네레이터는 마지막으로 호출한 위치(항목)에 을 기억하고 있으며, 한 번 순회할 때 마다 그 다음 값을 반환한다.
+실제 시퀀스 데이터와 다른 점은, 시퀀스 전체를 가지고 있는 것이 아니라 <u>시퀀스 데이터를 생성하기 위한 어떠한 루틴만을 가지고 있는 것</u>이다.
 
-제네레이터는 함수를 통해서 만들어지며, 함수 내부의 반복문에서 `yield`키워드를 사용하면 제네레이터가 된다.
 
-```
+
+**장점**: 전체 크기만큼의 메모리를 가지고 있는 시퀀스 데이터와는 달리 <u>메모리를 적게 사용</u>할 수 있다.
+
+
+
+**특징**
+
+- 제네레이터는 마지막으로 호출한 위치(항목)를 기억하고 있으며, 한 번 순회할 때 마다 그 다음 값을 반환한다.
+
+- 제네레이터는 함수를 통해서 만들어지며, 함수 내부의 반복문에서 `yield`키워드를 사용하면 제네레이터가 된다.
+
+```python
 >>> def range_gen(num):
 ...   i = 0
 ...   while i < num:
@@ -604,18 +615,196 @@ StopIteration
 ```
 
 함수 내부에 `yield`키워드가 사용되어 제네레이터 함수가 되었으며, 함수를 실행하면 제네레이터 객체를 반환한다.
-`yield`부분에서 멈춘 제네레이터 객체를 순회하기 위해서는 `__next__()` 함수를 실행해준다.
+`yield`부분에서 멈춘 제네레이터 객체를 순회하기 위해서는 `__next__()` 함수를 실행, 또는 next(gen) 해준다.
+
+
+
+<code>for i in gen</code>과 같이 for ... in ... 문을 사용하는 경우는, 실행되면서 `__next__(gen)` 함수를 실행, 또는 `next(gen)`
 
 
 
 ## 실습
 
-1. 매개변수로 문자열을 받고, 해당 문자열이 `red`면 `apple`을, `yellow`면 `banana`를, `green`이면 `melon`을, 어떤 경우도 아닐 경우 `I don't know`를 리턴하는 함수를 정의하고, 사용하여 `result`변수에 결과를 할당하고 `print`해본다.
-2. 1번에서 작성한 함수에 `docstring`을 작성하여 함수에 대한 설명을 달아보고, `help(함수명)`으로 해당 설명을 출력해본다.
-3. 한 개 또는 두 개의 숫자 인자를 전달받아, 하나가 오면 제곱, 두개를 받으면 두 수의 곱을 반환해주는 함수를 정의하고 사용해본다.
-4. 두 개의 숫자를 인자로 받아 합과 차를 튜플을 이용해 동시에 반환하는 함수를 정의하고 사용해본다.
-5. 위치인자 묶음을 매개변수로 가지며, 위치인자가 몇 개 전달되었는지를 print하고 개수를 리턴해주는 함수를 정의하고 사용해본다.
-6. 람다함수와 리스트 컴프리헨션을 사용해 한 줄로 구구단의 결과를 갖는 리스트를 생성해본다.
+매개변수로 문자열을 받고, 해당 문자열이 `red`면 `apple`을, `yellow`면 `banana`를, `green`이면 `melon`을, 어떤 경우도 아닐 경우 `I don't know`를 리턴하는 함수를 정의하고, 사용하여 `result`변수에 결과를 할당하고 `print`해본다.
+
+```python
+def fruits(string):
+    if(string == 'red'):
+        return 'apple'
+    elif(string == 'yellow'):
+        return 'banana'
+    elif(string == 'green'):
+        return 'melon'
+    else:
+        return "I don't know"
+
+result = fruits('red')
+print(result)
+```
+
+
+
+다른 방법
+
+```python
+# 딕셔너리를 활용해 더 깔끔하게 짜는 방법
+fruit = { 'red': 'apple', 'yellow': 'banana' }
+
+def what_fruits(color: str) -> str:
+    return fruit.get(color,"I don't know")
+
+what_fruits('red')
+```
+
+
+
+위에서 작성한 함수에 `docstring`을 작성하여 함수에 대한 설명을 달아보고, `help(함수명)`으로 해당 설명을 출력해본다.
+
+```python
+def fruits(string):
+    """
+        입력한 문자열에 따라서 해당 색이 해당되는 과일 이름이 출력되는 함수입니다.
+    """
+    if(string == 'red'):
+        return 'apple'
+    elif(string == 'yellow'):
+        return 'banana'
+    elif(string == 'green'):
+        return 'melon'
+    else:
+        return "I don't know"
+    
+help(fruits)
+```
+
+
+
+한 개 또는 두 개의 숫자 인자를 전달받아, 하나가 오면 제곱, 두개를 받으면 두 수의 곱을 반환해주는 함수를 정의하고 사용해본다.
+
+```python
+def math_arg(one, two = None):
+   
+    if (type(two) != 'int'):
+        return f'{one * two}'
+    
+    elif (type(two) == 'None'):
+        return f'{one * one}'
+```
+
+
+
+다른 코드
+
+```python
+def square_or_multi1(a, b=None):
+    if b is None:
+        return a ** 2
+    else:
+        return a * b
+    
+def square_or_multi2(a, b=None):
+    if len(args2) > 2:
+        raise TypeError('args length > 2')
+        return
+    elif len(arg2) == 2:
+        return args[0] * args[1]
+    elif len(arg2) == 1:
+        return args[0] * args[1]
+    else:
+        print('args length == 0')
+        return
+```
+
+
+
+
+
+두 개의 숫자를 인자로 받아 합과 차를 튜플을 이용해 동시에 반환하는 함수를 정의하고 사용해본다.
+
+```python
+def add_minus (a, b):
+    result = (f'{a + b}'), (f'{a - b}')
+    return result
+
+add_minus(1,2)
+```
+
+
+
+다른코드
+
+```python
+def sum_sub(a, b):
+    return (a + b), abs(a - b)
+
+sum_sub(5,3)
+```
+
+
+
+또 다른 코드
+
+```python
+def sum_sub(a, b):
+    large, small = (a, b) if a > b else (b, a)
+    return (large + small), (large - small)
+
+sum_sub(5,3)
+```
+
+
+
+
+
+위치인자 묶음을 매개변수로 가지며, 위치인자가 몇 개 전달되었는지를 print하고 개수를 리턴해주는 함수를 정의하고 사용해본다.
+
+```python
+def haveargs (*args):
+    result = args
+    print (result)
+    print(len(result))
+    
+haveargs(1,2,3,4)
+```
+
+
+
+다른 코드
+
+```python
+def print_and_return_args_length(*args):
+    len_args = len(args)
+    print(f'주어진 위치 인자의 개수는 {}개 입니다.')
+    return len(args)
+```
+
+
+
+람다함수와 리스트 컴프리헨션을 사용해 한 줄로 구구단의 결과를 갖는 리스트를 생성해본다.
+
+```python
+# 리스트 컴프리헨션 [표현식 for 항목 in iterable객체]
+# 람다함수 lambda <매개변수> : <표현식>
+
+results = []
+for i in range(2,10):
+    for j in range(1,10):
+        cur_result = (lambda x, y: f'{x} x {y} = {x * y}')(i, j)
+        result.append = cur_result
+        #result.append(f'{x} x {y} = {x * y}')(i, j)')
+        
+results
+```
+
+
+
+다른 코드
+
+```python
+results = [(lambda x,y: f'{x} x {y} = {x * y}')(i, j) for i in range(2, 10) for j in range(1,10)]
+```
+
+
 
 
 
@@ -625,6 +814,30 @@ StopIteration
   1. 문자열과 키 문자 1개를 받는 함수 구현
   2. while문을 이용, 문자열에서 키 문자가 존재하는 index위치를 검사 후 해당 index를 리턴
   3. 찾지 못했을 경우 -1을 리턴
+
+```python
+def sequential_search(string, key):
+    """
+    주어진 string에서 key에 해당하는 문자(1개)가 몇 번째 index에 존재하는지를 리턴
+    존재하지 않는다면 -1을 리턴한다
+    """
+    print('string:', string)
+    print('key:', key)
+    
+    for index, char in enumerate(string):
+        print(index, char, char == key)
+        if char == key:
+            return index
+    return -1
+```
+
+```python
+sequential_search('asd','s')
+#return 2
+```
+
+
+
 - 선택정렬(Selection sort)
   - [9, 1, 6, 8, 4, 3, 2, 0, 5, 7] 를 정렬한다.
   - 정렬과정
