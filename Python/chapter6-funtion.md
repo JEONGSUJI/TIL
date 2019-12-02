@@ -848,3 +848,42 @@ sequential_search('asd','s')
     1. 알고리즘 진행과정 그려보기
     2. 의사코드(Psuedo code) 작성
     3. 실제 코드 작성
+
+
+
+```python
+sample = [9, 1, 6, 8, 4, 3, 2, 0, 5, 7]
+sample_length = len(sample)
+print('sample length:', sample_length)
+
+for i in range(sample_length - 1):
+    # 현재 리스트의 상태를 보여줌
+    print(i, sample)
+    
+    # i번째 정렬 loop에서 가장 작은 값을
+    # i번째 Index의 원소와 교환해준다
+    min_value = sample[i]
+    min_value_index = i
+    print('초기 min_value:', min_value)
+    for j in range(1 + i, 10):
+        if min_value > sample[j]:
+            min_value = sample[j]
+            min_value_index = j
+	print('이 loop에서 min_value:', min_value)
+    print('이 loop에서 min_value_index:', min_value_index)
+    
+    # 가장 작은 값과, 그 작은 값의 index를 찾음 (min_value_index)
+    # i번째 원소와 min_value_index의 원소를 치환
+    sample[i], sample[min_value_index] = sample[min_value_index], sample[i]
+    
+    print()
+    
+print('결과: ', sample)
+```
+
+
+
+다른 코드
+
+![image-20191203084733733](C:\Users\정수지\AppData\Roaming\Typora\typora-user-images\image-20191203084733733.png)
+
