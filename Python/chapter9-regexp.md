@@ -310,3 +310,37 @@ re.sub(
 )
 ```
 
+
+
+### HTML과 정규표현식
+
+```python
+html = ''
+with open('webtoon_list.html', 'rt') as f:
+    html = f.read()
+```
+
+```python
+import re
+
+# 정규표현식을 사용해서 
+# a여는태그 / 닫는태그 사이에 있는 텍스트를 가져오기
+# ex) <a href="">ASDF</a> 에서 ASDF를 가져오기
+sample = '''
+<a href="asdf" class="title" title="유미의 세포들">유미의 세포들</a>
+<a href="asdf" class="title" title="덴마">덴마</a>
+'''
+
+# a태그가 "title"이라는 class를 가진 경우의 정규표현식 사용
+result_list = re.findall(r'<a.*?class="title".*?>(?P<name>[\w\s]+)</a>', html)
+m_list = re.finditer(r'<a.*?class="title".*?>(?P<name>[\w\s]+)</a>', html)
+for m in m_list:
+    print(m.group('name'))
+
+# 1. 위 a태그가 가진 "href"속성의 값을 가져와보기
+# 2. 위 a태그가 가진 "href"속성 내의 "titleId" GET parameter값 
+#   (유미의 세포들의 경우, 651673)을 가져와보기
+# 3. 전체 웹툰 목록에 중복내역이 표시되는데, 이를 없앤 리스트를 만들어보기
+# 4. 각 웹툰이 1주에 총 몇 회 연재되는지 표시해보기 (덴마의 경우 주3회)
+```
+

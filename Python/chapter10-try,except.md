@@ -13,7 +13,21 @@ except:
 	에러가 발생했을 경우 실행할 코드
 ```
 
-- 리스트의 범위를 넘어간 에러를 테스트해본다.
+
+
+실습) 리스트의 범위를 넘어간 에러를 테스트해본다.
+
+```python
+sample_list = [1, 2, 3, 4, 5]
+sample_dict = {'a': 'apple'}
+
+try:
+    print(sample_list[6])
+except IndexError as e1:
+    print('IndexError!')
+```
+
+
 
 ##### 여러가지 예외를 구분할 경우
 
@@ -28,8 +42,27 @@ except <예외 클래스3>:
 	...
 ```
 
-- 리스트의 범위를 넘어간 경우, `IndexError`를 명시적으로 처리해본다
-- 딕셔너리의 키가 없는 경우, `KeyError`를 명시적으로 처리해본다
+
+
+실습) 리스트의 범위를 넘어간 경우, `IndexError`를 ,딕셔너리의 키가 없는 경우, `KeyError`를 명시적으로 처리
+
+```python
+sample_list = [1, 2, 3, 4, 5]
+sample_dict = {'a': 'apple'}
+
+try:
+    print(sample_list[4])
+    print(sample_dict['b'])
+except IndexError as e1:
+    print('IndexError!')
+    print(e1)
+except KeyError as e2:
+    print('KeyError!')
+    print(e2.__class__)
+    print(e2.args)
+```
+
+
 
 ##### 예외사항을 변수로 사용할 경우
 
@@ -41,6 +74,8 @@ except <예외클래스> as <변수명>:
 ```
 
 - 위 예외에서 변수로 전달된 예외객체를 출력해본다
+
+
 
 ### try ~ else
 
@@ -72,4 +107,33 @@ else:
 ### 예외 만들기
 
 내장 클래스 `Exception`을 상속받아 커스텀 예외를 만들 수 있다. 초기화 메서드에서 예외에서 처리할 데이터를 받고, `print`문으로 사용되고 싶다면 `__str__`메서드를 오버라이드 해준다.
+
+
+
+```python
+class FruitNotFoundException(Exception):
+    def __init__(self, key):
+        self.key = key
+    
+    def __str__(self):
+        return f'FruitNotFound (Key: {self.key})'
+```
+
+```python
+fruit_dict = {
+    'a': 'apple',
+    'b': 'banana',
+}
+
+def find_fruit(key):
+    try:
+        return fruit_dict[key]
+    except KeyError:
+        raise FruitNotFoundException(key)
+```
+
+```python
+find_fruit('a')
+find_fruit('c')
+```
 
