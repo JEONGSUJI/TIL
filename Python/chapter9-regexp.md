@@ -250,9 +250,17 @@ m = re.match(r'<.*>', html)
 
 `{m}`패턴지정자를 사용해서 `a`로 시작하는 4글자 단어를 전부 찾는다.
 
+```python
+re.findall(r'\ba\w{3}\b', story)
+```
+
 
 
 r로 끝나는 모든 단어를 찾는다.
+
+```python
+re.findall(r'\w+r\b', story)
+```
 
 
 
@@ -260,6 +268,45 @@ a,b,c,d,e중 아무 문자나 3번 연속으로 들어간 단어를 찾는다.
 
 > ex) b[eca]me
 
+```python
+re.findall('\b\w*[abcde]{3}\w*\b', story)
+```
+
 
 
 `re.sub`를 사용해서 `,`로 구분된 앞/뒤 단어에 대해 앞단어는 대문자화 시키고, 뒷단어는 대괄호로 감싼다. 이 과정에서, 각각의 앞/뒤에 `before`, `after`그룹 이름을 사용한다.
+
+```python
+p = re.compile(
+    r'''(?P<before>\w+)      # 쉼표 이전의 단어
+        (?P<center>\s*,\s*)  # 쉼표 이전 단어와 쉼표 이후 단어 사이
+        (?P<after>\w+)       # 쉼표 다음 단어
+    ''', re.VERBOSE)
+# re.X
+
+re.sub(p, r'\g<before>\g<center>[\g<after>]', story)
+
+def replace_f(m):
+    before = m.group('before').upper()
+    center = m.group('center')
+    after = f'[{m.group("after")}]'
+    # after = '[{}]'.format(m.group('after'))
+    # after = '[{after}]'.format(after=m.group('after'))
+
+    result = f'{before}{center}{after}'
+    return result
+
+# 람다함수로 만들기
+def replace_f(m):
+    result = f'{m.group("before").upper()}{m.group("center")}[{m.group("after")}]'
+    return result
+
+replace_f = lambda m: f'{m.group("before").upper()}{m.group("center")}[{m.group("after")}]'
+
+re.sub(
+    p, 
+    lambda m: f'{m.group("before").upper()}{m.group("center")}[{m.group("after")}]', 
+    story,
+)
+```
+
