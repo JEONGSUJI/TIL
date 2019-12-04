@@ -314,6 +314,24 @@ re.sub(
 
 ### HTML과 정규표현식
 
+> 기준이 되는 html
+>
+> ```html
+> <li>
+> 	<div class="thumb">
+> 		<a href="/webtoon/list.nhn?titleId=119874&weekday=tue">
+>         <img src="https://shared-comic.pstatic.net/thumb/webtoon/119874/thumbnail/title_thumbnail_20150706185233_t83x90.jpg" title="덴마" alt="덴마">
+>         <span class="mask"></span>
+> 		</a>
+> 	</div>
+> 
+>     <a href="/webtoon/list.nhn?titleId=119874&weekday=tue" onclick="nclk_v2(event,'thm*t.tit','','4')" class="title" title="덴마">덴마
+>     </a>
+> </li>
+> ```
+
+
+
 ```python
 html = ''
 with open('webtoon_list.html', 'rt') as f:
@@ -332,15 +350,91 @@ sample = '''
 '''
 
 # a태그가 "title"이라는 class를 가진 경우의 정규표현식 사용
+
+# 방법 1) findall을 사용해 제목 출력
 result_list = re.findall(r'<a.*?class="title".*?>(?P<name>[\w\s]+)</a>', html)
+
+# 방법 2) firniter를 사용해 제목 출력
 m_list = re.finditer(r'<a.*?class="title".*?>(?P<name>[\w\s]+)</a>', html)
 for m in m_list:
     print(m.group('name'))
 
 # 1. 위 a태그가 가진 "href"속성의 값을 가져와보기
+result_list = re.findall(r'<a.*?href="(.*?)".*?class="title".*?>(?P<name>[\w\s]+)</a>', html)
+
 # 2. 위 a태그가 가진 "href"속성 내의 "titleId" GET parameter값 
 #   (유미의 세포들의 경우, 651673)을 가져와보기
-# 3. 전체 웹툰 목록에 중복내역이 표시되는데, 이를 없앤 리스트를 만들어보기
-# 4. 각 웹툰이 1주에 총 몇 회 연재되는지 표시해보기 (덴마의 경우 주3회)
-```
 
+# 방법1) findall을 사용해 titleId 출력
+result_list = re.findall(r'<a.*?href="(.*?titleId=(\d+).*?)".*?class="title".*?>(?P<name>[\w\s]+)</a>', html)
+
+# 방법2) finditer를 사용해 titleId 출력
+m_list = re.finditer(r'<a.*?href="(.*?titleId=(\d+).*?)".*?class="title".*?>(?P<name>[\w\s]+)</a>', html)
+
+for m in m_list
+	print m.group(1) # 링크 출력
+	titleId_match = re.search(r'\?titleId=(\d+)', m.group(1))
+    title_id = titleId_match.group(1)
+    print(title_id) # titleId 출력
+    print(m.group(3))
+
+# 3. 전체 웹툰 목록에 중복내역이 표시되는데, 이를 없앤 리스트를 만들어보기
+webtoon_list = re.findall(r'<a.*?class="title".*?>(?P<name>[\w\s]+)</a>', html)
+
+print(len(webtoon_list))
+
+# set으로 중복을 없애고 다시 list로 변환 (중복삭제)
+webtoon_list = list(set(webtoon_list))
+print(len(webtoon_list))
+
+# 4. 각 웹툰이 1주에 총 몇 회 연재되는지 표시해보기 (덴마의 경우 주3회)
+
+# 방법 1) 직접 구현
+webtoon_dict = {}
+for title in webtoon_list:
+    # webtoon_dict에서 title key에 해당하는 값을 가져옴
+    cur_webtoon_count = webtoon_dict.get(title)
+	if not cur_webtoon_count:
+        webtoon_dict[title] = 1
+    else:
+        webtoon_dict[title] += 1
+        
+# 방법 2) Counter를 사용
+from collections import Counter
+webtoon_dict = Counter(webtoon_list)
+
+# 이 webtoon_dict를 주간 연재 횟수 순으로 정렬
+# count를 기준으로 새 dict를 생성하기
+webtoon_count_dict = {}
+
+for title,count in webtoon_dict.items():
+    # count를 key로 사용, value가 없는 경우 빈 리스트를 value로 할당
+    webtoon_count_dict.setdefault(count, [])
+    webtoon_count_dict[count].appent(title)
+
+from collections import OrderedDict
+s = OrderedDict(sorted(webtoon_count_dict.items(), key=lambda item: item[0], reverse=True))
+
+# 이 webtoon_dict를 주간 연재 횟수 순으로 정렬
+#  operator.itemgetter사용
+import operator
+from collection import OrderDict
+s = OrderedDict(sorted(webtoon_dict.items()), key=operator.itemgetter(1), reverse=True)
+
+
+# 이 webtoon_dict를 주간 연재 횟수 순으로 정렬
+#  key에 lambda함수
+from collections import OrderedDict
+s = OrderedDict(sorted(webtoon_dict.items(), key=lambda item: item[1], reverse=True))
+
+# 이 webtoon_dict를
+#  1. 주간 연재 횟수 순 
+#  2. 같은 경우 제목순
+#    으로 정렬
+from collections import OrderedDict
+
+def webtoon_sort(item):
+    return (-item[1], item[0])
+    
+s = OrderedDict(sorted(webtoon_dict.items(), key=webtoon_sort))
+```
