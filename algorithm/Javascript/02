@@ -1,0 +1,46 @@
+**프로그래머스 코딩테스트 연습문제 풀이**
+
+Level1 / [핸드폰 번호 가리기]
+
+
+
+- 문제 설명
+
+프로그래머스 모바일은 개인정보 보호를 위해 고지서를 보낼 때 고객들의 전화번호의 일부를 가립니다. 전화번호가 문자열 phone_number로 주어졌을 때, 전화번호의 뒷 4자리를 제외한 나머지 숫자를 전부 `*`로 가린 문자열을 리턴하는 함수, solution을 완성해주세요.
+
+
+
+- 제한조건
+
+s는 길이 4 이상, 20이하인 문자열입니다.
+
+
+
+- 풀이 전 생각
+
+값을 담을 빈 문자열 변수를 할당한다.
+
+length를 활용해 전화번호의 길이를 구해 변수에 저장한다.
+
+slice()를 활용해서 length - 4를 별도의 변수 show_number에 저장한다.
+
+for문을 활용해 length - 4 개수만큼 answer에 `*`을 더한다.
+
+join을 활용해 answer 변수와 show_number 변수를 결합해 return한다.
+
+
+
+- 푼 코드
+
+```javascript
+function solution(phone_number) {
+    var answer = '';
+    phone_number_length = phone_number.length
+    print(phone_number_length)
+
+    return answer;
+}
+
+solution(01000000000)
+```
+
