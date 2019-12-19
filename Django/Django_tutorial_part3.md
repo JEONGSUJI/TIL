@@ -213,3 +213,41 @@ polls.urls 모듈의 path() 함수에서 인수의 이름을 정의했으므로 
 <li><a href="{% url 'detail' question.id %}">{{question.question_text}}</a></li>
 ```
 
+
+
+### URL의 이름공간 정하기
+
+실제 Django 프로젝트에는 여러개의 앱이 올 수 있다. Django는 이 앱들의 URL을 구별할 수 있는데 방법은 URLconf에 이름공간(namespacr)을 추가하는 것이다.
+
+아래 코드와 같이 작성하면 이름공간을 설정할 수 있다.
+
+```python
+# polls/urls.py
+
+from django.urls import path
+
+from . import views
+
+app_name = 'polls'
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('<int:question_id>/', views.detail, name='detail'),
+    path('<int:question_id>/results/', views.results, name='results'),
+    path('<int:question_id>/vote/', views.vote, name='vote'),
+]
+```
+
+
+
+위와같이 지정해줬다면, 아래와 같이 코드를 수정한다.
+
+```python
+# polls/templates/polls/index.html
+
+# 변경 전 코드
+# <li><a href="{% url 'detail' question.id %}">{{question.question_text}}</a></li>
+
+# 변경 코드
+<li><a href="{% url 'polls:detail' question.id %}">{{question.question_text}}</a></li>
+```
+
