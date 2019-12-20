@@ -208,7 +208,7 @@ $ ./manage.py runserver
 - 어플리케이션 만들기
 
 ```python
-$python manage.py start <애플리케이션명>
+$python manage.py startapp <애플리케이션명>
 # 나는 blog라는 애플리케이션명을 입력해주었다.
 ```
 
