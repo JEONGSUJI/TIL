@@ -170,3 +170,230 @@ MEDIA_ROOT = os.path.join(ROOT_DIR, '.media')
 ```
 
 위와 같이 설정하면 이미지를 올렸을 때 app 폴더와 동일 위치에  .media 폴더가 생성되고, 우리가 upload_to에서 추가로 경로 설정해준 것과 같이 내부 폴더가 생성된 뒤 이미지가 들어간다.
+
+
+
+## Admin 개선
+
+### 언어 및 시간 설정 변경
+
+```python
+# config/setting.py
+
+LANGUAGE_CODE = 'ko-kr'
+
+TIME_ZONE = 'Asia/Seoul'
+```
+
+
+
+### post화면에서 모두 수정가능하도록 화면 변경
+
+```python
+# post/admin.py 해당 영역 수정 및 추가
+
+from django.contrib import admin
+
+from .models import Post, PostImage, PostComment, PostLike
+
+class PostImageInline(admin.TabularInline):
+    model = PostImage
+    extra = 1
+    
+class PostCommentInline(admin.TabularInline):
+    model = PostComment
+    extra = 1
+    
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    pass
+	list_display = ('author', 'content', 'created')
+    list_display_links = ('author', 'content')
+    inlines = [
+        PostImageInline,
+        PostCommentInline,
+    ]  
+```
+
+
+
+```python
+# posts/models.py 해당하는 영역 추가
+
+class Post(models.Model):
+    
+    def __str__(self):
+        return '{author} | {created}'.format(
+        author = self.author.username,
+    	created = self.created,    
+	)
+```
+
+
+
+> **extra** : 여분으로 표시할 개수를 의미한다.
+>
+> **TabularInline** : StackedInline 대신 TabularInlined을 사용하면, 관련된 객체는 좀 더 조밀하고 테이블 기반 형식으로 표시된다.
+>
+> 기본적으로 Django는 각 객체의 str()을 표시한다. 그러나 개별 필드를 표시할 수 있는 경우 **list_display** admin 옵션을 사용해 객체의 변경 목록 페이지에서 열로 표시할 필드 이름의 튜플을 보여줄 수 있다.
+
+
+
+## index, login_view의 url, template, view 연결
+
+
+
+미션
+
+- settings.TEMPLATES의 DIRS에 instagram/app/templates 경로를 추가
+
+- Template: templates/index.html <h1>Index!</h1> URL: '/' , name='index'
+- Template: templates/members/login.html POST요청을 처리하는 form 내부에는 input 2개를 가지며, 각각 username, password로 name을 가짐
+- URL: /members/login/  (members.urls를 사용, config.urls에 include하여 사용) 
+- name: members:login (url namespace를 사용) 
+- POST요청시, 예제를 보고 적절히 로그인 처리한 후, index로 돌아갈 수 있도록 한다
+- 로그인에 실패하면 다시 로그인페이지로 이동
+
+
+
+```python
+# config/settings.py
+
+TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
+
+TEMPLATES = [
+    {
+        'DIRS': [TEMPLATES_DIR,]
+    }
+]
+```
+
+
+
+```python
+# config/urls.py 해당 영역 추가
+
+from django.urls import path, include
+
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+	path('members/', include('members.urls')),
+]
+```
+
+
+
+```python
+# members/admin.py
+
+from .models improt User
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    pass
+```
+
+
+
+```python
+# members/urls.py
+from django.urls import path
+
+from . import views
+
+app_name = 'members'
+urlpatterns = [
+    path('login/', views.login_view, name='login'),
+]
+```
+
+
+
+```python
+# members/views.py
+
+def login_view(request):
+    return render(request, 'members/login.html')
+```
+
+
+
+```python
+# templates/index.html
+
+<h1>Index!</h1>
+```
+
+
+
+```python
+# templates/members/login.html
+
+<h1><Login!/h1>
+```
+
+
+
+## Login_view 기능 구현
+
+```python
+# members/views.py
+
+from django.contrib.auth import authenticate, login
+from django.shortcut import render, redirect
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        print('username:', username)
+        print('password:', password)
+        user = authenticate(request, username=username, password=password)
+        print('user:', user)
+        
+        if user:
+            login(request, user)        
+            return redirect('index')
+        else:
+            return redirect('members:login')
+        
+	return render(request, 'members/login.html')
+```
+
+
+
+```python
+# templates/index.html
+
+<h1>Index!</h1>
+<div>{{ request.user }}</div>
+<div>{{ request.user.is_authenticated }}</div> 
+```
+
+
+
+```python
+# templates/members/login.html
+
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Login</h1>
+    <form action="" method="POST">
+        {% csrf_token %}
+        <input name="username" type="text">
+        <input name="password" type="password">
+        <button type="submit">로그인</button>
+    </form>
+</body>
+</html> 
+```
+
