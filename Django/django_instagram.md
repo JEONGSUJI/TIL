@@ -299,6 +299,7 @@ class UserAdmin(admin.ModelAdmin):
 
 ```python
 # members/urls.py
+
 from django.urls import path
 
 from . import views
@@ -395,5 +396,375 @@ def login_view(request):
     </form>
 </body>
 </html> 
+```
+
+
+
+## index 및 login 페이지 레이아웃 및 CSS 구현 (Bootstrap활용)
+
+
+
+### Bootstrap 다운로드 및 필요 파일 추가
+
+https://getbootstrap.com/docs/4.3/getting-started/download/ 에서 다운로드
+
+static 폴더 생성 > static 폴더 내 bootstrap 폴더 생성 > bootstrap 폴더 내 `bootstrap.css`와 `bootstrap.css.map` 파일 추가
+
+
+
+### static 폴더 연결
+
+```python
+# config/settings.py
+
+STATIC_DIR = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = [
+    STATIC_DIR,
+]
+```
+
+
+
+### base.html 생성하여 템플릿 분리
+
+미션
+
+- base.html추가 상단에 {% load static %}
+- 정적파일 불러올 때 {% static '경로' %}로 불러옴
+- index.html과 login.html이 base.html을 extends하도록 함
+
+
+
+```html
+# templates/base.html
+
+{% load static %}
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.css' %}">
+    <title>Instagram</title>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div id="wrap">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+</html> 
+```
+
+
+
+> **{% load static %}** : 템플릿 태그 모듈을 가져온다. 이미 만들어져있지만 사용하려고 한다면 적어주어야한다.
+
+
+
+```python
+# templates/index.html
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="mr-auto ml-auto mt-3 col-lg-4 col-md-6 col-sm-8 col-10">
+            <div class="card text-center p-4">
+                <h1>Instagram</h1>
+                <p class="text-secondary">친구들의 사진과 동영상을 보려면 가입하세요</p>
+                <button class="btn btn-primary btn-block">Facebook으로 로그인</button>
+                <hr>
+                <form action="">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="휴대폰 번호 또는 이메일 주소">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="성명">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="사용자 이름">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="비밀번호">
+                    </div>
+                    <button class="btn btn-primary btn-block">가입</button>
+                </form>
+                <p class="text-secondary">가입하면 Instagram의 약관 데이터 정책 및 쿠키 정책에 동의하게 됩니다</p>
+            </div>
+
+            <div class="card text-center p-4 mt-3 mb-3">
+                <span>계정이 있으신가요?</span>
+                <a href="">로그인</a>
+            </div>
+        </div>
+    </div>
+{% endblock %} 
+```
+
+
+
+```python
+# config/views.py
+
+def index(request):
+    return render(request, 'index.html')
+```
+
+
+
+```css
+# static/css/index.css
+
+body {
+    background-color: rgb(250, 250, 250);
+} 
+```
+
+
+
+### login 페이지 레이아웃 및 CSS 구현
+
+```html
+# members/login.html
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="mr-auto ml-auto mt-3 col-lg-4 col-md-6 col-sm-8 col-10">
+            <div class="card text-center p-4">
+                <h1>Instagram</h1>
+                <form action="">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="휴대폰 번호 또는 이메일 주소">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="비밀번호">
+                    </div>
+                    <button class="btn btn-primary btn-block">로그인</button>
+                </form>
+                <hr>
+                <button class="btn btn-block btn-outline-primary mb-3">Facebook으로 로그인</button>
+                <a href="">비밀번호를 잊으셨나요?</a>
+            </div>
+
+            <div class="card text-center p-4 mt-3 mb-3">
+                <span>계정이 없으신가요?</span>
+                <a href="">가입하기</a>
+            </div>
+        </div>
+    </div>
+{% endblock %} 
+```
+
+
+
+## index와 login 간 링크 구현
+
+
+
+### 로그인 버튼 클릭 시 로그인 페이지로 이동
+
+```python
+# templates/index.html
+
+<a href="{% url 'members:login' %}">로그인</a>
+```
+
+
+
+### 가입하기 버튼 클릭 시 index 페이지로 이동
+
+```python
+# members/login.html
+
+<a href="{%url 'index' %}">가입하기</a>
+```
+
+
+
+
+
+## Login form 동작 fix
+
+form에 입력한 값을 보내도록 처리하가 위해, method="POST"로 변경 후 각 항목에 name값 지정
+
+```python
+# templates/members/login.html
+
+<form method="POST">
+	{% csrf_token %}
+    <div class="form-group">
+        <input name="username" type="text" class="form-control" placeholder="휴대폰 번호 또는 이메일 주소">
+	</div>
+    <div class="form-group">
+    	<input name="password" type="password" class="form-control" placeholder="비밀번호">
+	</div>
+</form>
+```
+
+
+
+확인을 위해 request.user 출력하도록 처리
+
+```python
+# templates/index.html
+
+	<div>{{request.user}}</div>
+	<div>{{request.user.is_authenticated}}</div>
+```
+
+
+
+
+
+## Post_list url, view, template연결
+
+미션
+
+- 로그인 완료 후 이 페이지로 이동하도록 함 
+- index에 접근할 때 로그인이 되어 있다면, 이 페이지로 이동하도록 함 
+- 로그인이 되어있는지 확인: 
+  - request.user.is_authenticated가 True인지 체크 
+  - URL:      /posts/  (posts.urls를 사용, config.urls에서 include) 
+  - ​              app_name: 'posts' 
+  - ​               url name: 'post-list' 
+  - ​              -> posts:post-list 
+- Template: templates/posts/post-list.html   <h1>Post List</h1>
+
+
+
+```python
+# config/urls.py path 추가
+	path('post/', include('posts.urls')) 
+```
+
+
+
+```python
+# posts/urls.py
+from django.urls import path
+
+from . import views
+
+app_name = 'posts'
+urlpatterns = [
+    path('', views.post_list, name="post-list"),
+]
+```
+
+
+
+```html
+# templates/posts/post-list.html
+
+{% extends 'base.html' %}
+
+{% block content %}
+	<h1>Post List</h1>
+{% endblock %}
+```
+
+
+
+```python
+# posts/views.py
+
+def post_list(request):
+    return render(request, 'posts/post-list.html')
+```
+
+
+
+## 로그인이 되어있는 상태라면 바로 post_list로 이동하도록 처리
+
+
+
+```python
+# config/views.py
+
+from django.shortcuts import render, redirect
+
+def index(request):
+    if request.user.is_authenticated:
+        return redirect('posts:post-list')
+    return render(request, 'index.html')
+```
+
+
+
+```python
+# members/views.py 아래 부분 수정
+
+	if user:
+        login(request, user)
+        return redirect('posts:post-list')
+    else:
+        return redirect('members:login')
+```
+
+
+
+## post_list에 QuerySet 전달 후 출력
+
+
+
+```python
+# posts/views.py
+
+from .models import Post
+
+def post_list(request):
+    posts = Post.objects.order_by('-pk')
+    context = {
+        'posts': posts,
+    }
+    
+    return render(request, 'posts/post-list.html', context)
+```
+
+
+
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Post List</h1>
+    {% for post in posts %}
+        <div>{{ post.author }}</div>
+        <div>{{ post.created }}</div>
+    {% endfor %}
+
+    <div class="container-fluid">
+        <div class="card" style="border-radius: 1px;">
+            <div class="card-header p-3">lhy</div>
+            <div class="card-body p-3">
+                <div class="btn-container">
+                    <button class="btn btn-sm btn-outline-primary">Like</button>
+                    <button class="btn btn-sm btn-outline-primary">Comment</button>
+                </div>
+
+                <div>lhy님 외 35명이 좋아합니다</div>
+                <ul class="comment-list">
+                    <li>lhy 장고너무좋아요</li>
+                    <li>pjh 진짜그렇네요!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %} 
 ```
 
