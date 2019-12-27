@@ -44,24 +44,24 @@ Django는 파이썬으로 만들어진 무료 오픈소스 웹 애플리케이�
 - 디렉토리를 새로 생성 후 가상환경을 만들 폴더로 이동한다.
 
 ```python
-$mkdir djagnogirls
-$cd djagnogirls
+$ mkdir djagnogirls
+$ cd djagnogirls
 ```
 
 - 가상환경을 만들 폴더로 이동했다면, 아래와 같은 코드를 실행한다.
 
 ```python
-$pyenv virtualenv 3.7.5 <환경명>
-$pyenv local <환경명>
+$ pyenv virtualenv 3.7.5 <환경명>
+$ pyenv local <환경명>
 ```
 
 - Pycharm Interpreter 설정
 
 ```python
-$charm .
+$ charm .
 
 # 만약, 위 코드가 실행이 되지 않는다면
-$pycharm-community .
+$ pycharm-community .
 ```
 
 1) Pycharm > File > Settings > Project:django_repractice > Project Interpreter
@@ -81,13 +81,13 @@ $pycharm-community .
 - Django 설치하기
 
 ```python
-$pip install 'django<3.0'
+$ pip install 'django<3.0'
 ```
 
 +. `pip list`로 Django 확인하기
 
 ```python
-$django-admin startproject <명칭> .
+$ django-admin startproject <명칭> .
 # 나는 config라는 명칭을 붙여 입력해주었다.
 ```
 
@@ -95,7 +95,7 @@ $django-admin startproject <명칭> .
 
 
 
-> 설치된 폴더 설명
+> **[설치된 폴더 설명]**
 >
 > **manage.py** : 사이트 관리를 도와주는 역할을 한다. 이 스크립트로 다른 설치 작업 없이 컴퓨터에서 웹 서버를 시작할 수 있다.
 >
@@ -105,13 +105,52 @@ $django-admin startproject <명칭> .
 
 
 
+- shell_plus / jupyter notebook
+
+```python
+$ pip install django_extensions
+$ pip install jupyter notebook
+```
+
+
+
 - DB Browser 설치, 변경되는 DB를 확인하기 위해 sqlitebrowser 설치
 
 ```python
-$sudo apt-get install sqlitebrowser
+$ sudo apt-get install sqlitebrowser
 ```
 
 - sqlitebrowser로 db.sqlite3 파일열어 확인하기 11개의 테이블이 있다면 정상
+
+
+
+- 어플리케이션 만들기
+
+```python
+$ python manage.py startapp <애플리케이션명>
+# 나는 blog라는 애플리케이션명을 입력해주었다.
+```
+
+
+
+- blog 애플리케이션을 사용하겠다고 장고에 알려주는 코드를 추가해야한다.
+
+```python
+# config/settings.py
+
+INSTALLED_APPS = [
+    'blog',
+    'django_extensions', 		# shell_plus를 사용하겠다고 알려주는 코드
+]
+```
+
+
+
+- git에 올리는 경우 .gitignore추가
+
+```python
+$ touch .gitignore
+```
 
 
 
@@ -120,8 +159,8 @@ $sudo apt-get install sqlitebrowser
 ```python
 # blog/models.py
 
-from django.conf import settings
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 
 # models.Model에서 models는 Post가 장고 모델임을 의미한다. 이 코드 때문에 장고는 Post가 데이터베이스에 저장되어야 한다고 알게됨
@@ -150,7 +189,7 @@ class Post(models.Model):
 
 ```python
 # migrations 파일 생성
-$./manage.py makemigrations
+$ ./manage.py makemigrations
 ```
 
 +. 아래와 같이 출력되면 정상
@@ -167,7 +206,7 @@ Migrations for 'blog':
 
 ```python
 # 변경사항에 대해 데이터베이스를 저장
-$./manage.py migrate
+$ ./manage.py migrate
 ```
 
 - sqlitebrowser로 db.sqlite3 파일열어 확인하기 12개의 테이블이 있다면 정상
@@ -199,17 +238,10 @@ $./manage.py migrate
 - 웹서버 시작하기
 
 ```python
-$python manage.py runserver
+$ python manage.py runserver
 
 # 또는
 $ ./manage.py runserver
-```
-
-- 어플리케이션 만들기
-
-```python
-$python manage.py startapp <애플리케이션명>
-# 나는 blog라는 애플리케이션명을 입력해주었다.
 ```
 
 
@@ -222,7 +254,9 @@ $python manage.py startapp <애플리케이션명>
 from django.contrib import admin
 from .models import Post
 
-admin.site.register(Post)
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    pass
 ```
 
 - localhost:8000/admin/ 입력 시 admin 페이지가 나오는지 확인
@@ -232,7 +266,7 @@ admin.site.register(Post)
 - 로그인을 위해 슈퍼 사용자 설정
 
 ```python
-$python manage.py createsuperuser
+$ python manage.py createsuperuser
 ```
 
 (입력 시 관리자 id와 password를 설정하도록 터미널창이 실행된다. Email address 입력은 필수가 아니다.)
@@ -245,7 +279,7 @@ $python manage.py createsuperuser
 
 Blog > Posts Add하여 게시글 여러개 작성하기
 
-(Author에 슈퍼유저 id를 선택한 후 작성해야함)
+(추가 시 Author에 슈퍼유저 id를 선택한 후 작성해야함)
 
 
 
@@ -399,6 +433,7 @@ TEMPLATES = [
 > 참고) post_list.html을 찾아서 그 파일을 text로 만들어서 HttpResponse형태로 돌려주는 기능을 하는 shortcut함수
 > ```python
 > from django.shortcuts import render
+> from django.template import loader
 > 
 > content = loader.render_to_string('post_list.html', None, request)
 > return HttpResponse(content)
@@ -451,11 +486,10 @@ Post.objects.all()
 from blog.models import Post
 
 def post_list(request):
-    post = Post.objects.all()
+    posts = Post.objects.all()
     context = {
         'posts' : posts
     }
-    print(posts)
     
     return render(request, 'post-list.html', context)
 ```
@@ -469,7 +503,6 @@ def post_list(request):
     <div>
         <p>{{post.created_date}}</p>
         <p>{{post.text}}</p>
-        <p>{{post.text}}</p>
     </div>
 {% endfor %}
 </body>
@@ -482,13 +515,14 @@ def post_list(request):
 >HTML에 파이썬 코드를 넣을 수 없다. 브라우저는 파이썬 코드를 이해할 수 없기 때문이다. 하지만 템플릿 태그는 파이썬을 HTML로 바꿔주어, 빠르고 쉽게 동적인 웹사이트를 만들 수 있게 도와준다.
 >
 >```python
->{% for post in posts %}
->    {{ post }}
+>{% for post in posts %}		# for 사용법
 >{% endfor %}
+>
+>{{ post }}					# 변수
 >
 >{% url 'post_detail' pk=post.pk %}
 >
->{% if ... %} ... {% endif %} #내용이 있는지 확인할 때 사용합니다.
+>{% if ... %} ... {% endif %} # if문 / 내용이 있는지 확인할 때 사용합니다.
 >```
 
 
@@ -535,11 +569,7 @@ STATICFILES_DIRS = [
             {% for post in posts %}
             <div class="card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">{{ post.title }}</h5>
-                    
-<!-- linebreaksbr: 줄바꿈을 <br>태그로 변환
-truncatechars: 글자 수 제한, 초과되는 글자는 말줄임표 처리 -->
-                    
+                    <h5 class="card-title">{{ post.title }}</h5>                    
                     <p class="card-text">{{ post.text|linebreaksbr|truncatechars:250}}</p>
                     <div class="text-right">
                         <span>{{ post.created_date }}</span>
@@ -553,6 +583,11 @@ truncatechars: 글자 수 제한, 초과되는 글자는 말줄임표 처리 -->
 ```
 
 다음과 같이 코드를 변경하면 부트스트랩이 적용된 화면으로 표시됩니다.
+
+
+
+>linebreaksbr: 줄바꿈을 태그로 변환
+>truncatechars: 글자 수 제한, 초과되는 글자는 말줄임표 처리
 
 
 
@@ -595,7 +630,8 @@ urlpatterns = [
 ```python
 # urls.py
 
-path('post-detail/<int:pk>/', post_detail, name="post-detail"), # 'post-detail/<int:pk>/'로 변경
+# 'post-detail/<int:pk>/'로 변경
+path('post-detail/<int:pk>/', post_detail, name="post-detail"), 
 ```
 
 
@@ -604,7 +640,7 @@ path('post-detail/<int:pk>/', post_detail, name="post-detail"), # 'post-detail/<
 # views.py
 
 def post_detail(request, pk):
-    posts = Post.object.filter(pk=pk)
+    posts = Post.objects.filter(pk=pk)
     # Post.object.filter(pk=pk)는 넘어오는 결과값이 <QuerySet [<Post: 배포하기>]>라 아래 코드를 더 수행함
     post = posts[0]
     
@@ -615,13 +651,13 @@ def post_detail(request, pk):
     return render(request, 'post-detail.html', context)
 ```
 
-> filter : QuerySet을 반환한다.
+> **filter** : QuerySet을 반환한다.
 >
-> get : 정확하게 1개만 가져오고 싶을 때 사용한다.
+> **get** : 정확하게 1개만 가져오고 싶을 때 사용한다.
 
 
 
-> QuerySet 객체의 특징
+> **QuerySet 객체의 특징**
 >
 > - 모델의 클래스의 인스턴스들이 여러개 담겨있다.
 > - list처럼 사용 가능하다 (for문 순회 가능)
@@ -629,7 +665,7 @@ def post_detail(request, pk):
 
 
 
-> save()
+> **save()**
 >
 > - 변경사항 저장 / 저장할때는 하나의 row씩 저장한다.
 > - blog.models.Post는 한 row를 나타낸다.
@@ -638,7 +674,7 @@ def post_detail(request, pk):
 
 
 
-- 위 코드를 실행한 뒤 없는 pk가 입력된 경우 오류화면이 출력되니 '없음' 문구를 try-exept 구문을 사용해서 출력해보자
+- 위 코드를 실행한 뒤 없는 pk가 입력된 경우 오류화면이 출력되니 '없음' 문구를 try-except 구문을 사용해서 출력하기
 
 ```python
 # views.py
@@ -662,13 +698,14 @@ def post_detail(request, pk):
 위 코드를 Django에서 제공하는 shortcut함수를 통해 더 간결하게 줄일 수 있다.
 
 ```python
-from django.shortcuts import render, get_object_or_404
+def post_detail(request, pk):
+    from django.shortcuts import render, get_object_or_404
 
-post = get_object_or_404(Post, pk=pk)
+    post = get_object_or_404(Post, pk=pk)
 
-    context = {
-        'post': post,
-    }
+        context = {
+            'post': post,
+        }
 
     return render(request, 'post-detail.html', context)
 ```
@@ -711,7 +748,7 @@ post = get_object_or_404(Post, pk=pk)
 ```
 
 ```html
-<!-- # post-list.html -->
+<!-- # post_list.html -->
 
 {% extends 'base.html'%}
 {% block content %}
@@ -725,7 +762,7 @@ post = get_object_or_404(Post, pk=pk)
                 </div>
             </div>
         </div>
-        {% endfor %}
+	{% endfor %}
 {% endblock %}
 ```
 
@@ -734,12 +771,16 @@ post = get_object_or_404(Post, pk=pk)
 
 {% extends 'base.html'%}
 {% block content %}
-<div>{{ post.title }}</div>
-<div>{{ post.author }}</div>
-<div>{{ post.created_date }}</div>
-<div>{{ post.published_date }}</div>
-<div>{{ post.text }}</div>
-
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">{{ post.title }}</h5>
+        <p class="card-text">{{ post.text|linebreaksbr|truncatechars:250}}</p>
+        <div>{{ post.author }}</div>
+        <div>{{ post.created_date }}</div>
+        <div>{{ post.published_date }}</div>
+        <div>{{ post.text }}</div>
+    </div>
+</div>
 {% endblock %}
 ```
 
@@ -784,11 +825,14 @@ urlpatterns = [
 
 User 모델의 인스턴스를 가져와 me를 전달해주기 위해 User 모델을 불러오고 create해준다.
 
-```python
-from django.contrib.auth.models import User
-me = User.objects.get(username='ola')
+아래 jsj에 들어가는 것은 생성했던 어드민 id입력
 
-Post.object.create(author=me, title='Sample', text='Test')
+```python
+# shell_plus
+
+from django.contrib.auth.models import User
+me = User.objects.get(username='jsj')
+Post.objects.create(author=me, title='Sample', text='Test')
 ```
 
 
@@ -858,9 +902,7 @@ urlpatterns = [
 </form>
 ```
 
-method를 POST로 입력
-
-
+method를 POST로 입력, {% csrf_token %} 추가하기
 
 input과 textarea 내 name을 입력해주어야 url에서 뽑아낼 수 있다.
 
@@ -872,13 +914,13 @@ input과 textarea 내 name을 입력해주어야 url에서 뽑아낼 수 있다.
 
 우선, request로 들어오는 값을 확인하기 위해 pycharm에서 debug를 세팅이 필요하다. 화면 상단에 'Add Configuration' 버튼을 클릭한다.
 
-![image-20191213213034110](/home/jungsuji/.config/Typora/typora-user-images/image-20191213213034110.png)
+![image-20191227170215174](/home/jungsuji/.config/Typora/typora-user-images/image-20191227170215174.png)
 
 위와 같이 Script path와 Parameters를 setting한다.
 
 
 
-(원래 breakpoint를 설정하고 디버깅을 통해 정보를 얻어 리턴해주는 것이나 디버깅 과정이 실행되지 않아 추후 추가 예정)
+![image-20191227165849961](/home/jungsuji/.config/Typora/typora-user-images/image-20191227165849961.png)
 
 
 
@@ -939,7 +981,7 @@ def post_add(request):
         return redirect('post-list') # 추가된 부분
 
     else:
-        return render(request, 'post-add.html')
+        return render(request, 'post_add.html')
 ```
 
 이전에 작성한 return문에 해당하는 부분은 주석처리를 하고 redirect 메서드를 통해 post-list로 이동하게 한다.
@@ -963,6 +1005,374 @@ def post_list(request):
 ```
 
 order_by를 사용하고 정렬 기준은 '-pk'로 입력해 내림차순 정렬해주었다.
+
+
+
+## Post_delete 구현하기
+
+
+
+우선 post_delete 함수를 만들어보자.
+
+post_delete 함수가 실행되면 선택한 post를 delete해야한다. 그 이후 post-list 화면으로 돌아가도록 한다.
+
+```python
+# blog/views.py
+
+def post_delete(request, pk):
+    post = Post.objects.get(pk=pk)
+    post.delete()
+
+    return redirect('post-list')
+
+# 또는
+def post_delete(request, pk):
+    post = Post.objects.filter(pk=pk)
+    post.delete()
+    
+    return redirect('post-list')
+```
+
+
+
+추가한 post-delete함수에 url을 연결해주자.
+
+```python
+# config/urls.py urlspatterns 내 아래 코드 추가
+
+path('post-detail/<int:pk>/delete/', post_delete, name="post-delete"),
+```
+
+
+
+settings.py도 'blog'로 기입했던 부분을 아래와 같이 변경해준다. (사실 blog 상태에서 수정하지 않아도, 에러가 발생하지 않는다.)
+
+```python
+# config/settings.py
+
+INSTALLED_APPS = [
+    'blog.apps.BlogConfig',
+]
+```
+
+
+
+그 다음으로는 post_list.html로 가서 삭제버튼을 생성 후 url을 연결해주자.
+
+```python
+# templates/post_list.html 내 코드 추가
+
+        <div class="text-left">
+            <a href="{%url 'post-delete'%}" class="btn btn-danger btn-sm">삭제</a>
+            <a href="#" class="btn btn-info btn-sm">수정</a>
+        </div>
+        
+        # 위치 참고
+        <div class="text-right">
+            <span>{{ post.created_date }}</span>
+        </div>
+```
+
+여기까지 코드를 작성하면 삭제버튼 클릭 시 list에서 해당 post가 사라진다.
+
+
+
+삭제버튼을 클릭하면, 바로 삭제되는 것이 아니라 한번 물어봐주는 구조로 변경해보자.
+
+삭제할 것인지 물어볼때 post의 제목과 생성된 일시도 표시되도록 해보자.
+
+```python
+# templates/post_delete.html
+
+{% extends 'base.html' %}
+{% block content %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3>정말로 이 글을 삭제하시겠습니까?</h3>
+            <br>
+            <ul>
+                <li>제목: {{post.title}}</li>
+                <li>작성날짜: {{post.created_date}}</li>
+            </ul>
+        </div>
+        <form action="{% url 'post-delete' pk=post.pk %}" method="POST">
+            {% csrf_token %}
+            <div class="ml-2 mb-2">
+                <button type="submit" class="btn btn-danger btn-sm">확인</button>
+                <a href="{% url 'post-list'%}" class="btn btn-primary btn-sm">취소</a>
+            </div>
+        </form>
+        <a href="{% url 'url-name-post-list'%}" class="btn btn-primary btn-sm" style="width:40%">취소</a>
+    </div>
+{% endblock %}
+```
+
+
+
+post_delete함수에서 POST로 들어왔을때와 POST가 아닌 GET 등으로 접근했을 때 처리를 나눠준다.
+
+```python
+# blog/views.py
+
+def post_delete(request, pk):
+    if request.method == 'POST':
+        post = Post.objects.get(pk=pk)
+        post.delete()
+
+        return redirect('post-list')
+    else:
+        post = get_object_or_404(Post, pk=pk)
+        context = {
+            'post':post
+        }
+        return render(request, 'post_delete.html', context)
+```
+
+위 코드까지 완료하면, post-delete 기능이 성공적으로 구현된다.
+
+
+
+## post_edit 구현하기
+
+미리 만들어놓은 post_list.html에 수정버튼 클릭 시에 수정 화면으로 이동하도록 해보겠다.
+
+
+
+우선 post_add.html을 복사하여, post_edit.html 만들자
+
+```python
+# templates/post_edit.html
+
+{% extends 'base.html' %}
+{% block content %}
+<div>
+    <form action="" method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="title" >제목</label>
+            <input type="text" class="form-control" name="title" id="title">
+        </div>
+        <div class="form-group">
+            <label for="text">내용</label>
+            <textarea id="text" name="text" rows="10" class="form-control"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">수정</button>
+    </form>
+</div>
+{% endblock %}
+```
+
+
+
+그럼 post_edit화면으로 이동할 수 있게 post_edit 함수를 구현해보자
+
+해야할 작업은 다음과 같다. 우선 GET 접근 시 출력까지 확인해보도록 하겠다.
+
+GET 접근 시, post_edit화면으로 이동하고 해당하는 post의 제목과 내용이 입력된 상태로 post_edit.html화면을 보여줌
+
+POST 접근 시, 수정한 내용을 반영하여 기존의 post에 내용을 바꿔 저장하고 post-detail로 이동
+
+```python
+# blog/views.py
+
+def post_edit(request, pk):
+    if request.method == 'POST':
+		pass
+
+    else:
+        post = Post.objects.get(pk=pk)
+        context = {
+            'post': post
+        }
+        return render(request, 'post_edit.html', context)
+```
+
+
+
+context를 보내주기 때문에 이제 post_edit 화면에서 기존의 내용을 출력해줄 수 있다. 다음과 같이 코드를 변경하자
+
+```python
+# templates/post_edit.html
+
+{% extends 'base.html' %}
+{% block content %}
+<div>
+    <form action="" method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="title" >제목</label>
+            <input type="text" class="form-control" name="title" id="title" value="{{post.title}}">
+        </div>
+        <div class="form-group">
+            <label for="text">내용</label>
+            <textarea id="text" name="text" rows="10" class="form-control">{{post.text}}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">수정</button>
+    </form>
+</div>
+{% endblock %}
+```
+
+
+
+다음으로 post_list.html 부분의 수정 버튼 코드를 아래와 같이 수정하자
+
+```python
+<a href="{% url 'post-edit' pk=post.pk %}" class="btn btn-info btn-sm">수정</a>
+```
+
+
+
+이제 수정버튼 클릭 시 path 경로를 설정하자
+
+```python
+# config/urls.py urlpatterns에 추가
+
+path('post-detail/<int:pk>/edit/', post_edit, name="post-edit"),
+```
+
+
+
+GET 접근 시, post_edit화면으로 이동하고 해당하는 post의 제목과 내용이 입력된 상태로 post_edit.html화면을 보여줌까지 작업을 완료했다. 이제 POST 작업을 해보자.
+
+
+
+앞선 작업은 위에서 다 처리했기에 views.py에 post_edit함수만 수정해주면 된다.
+
+```python
+def post_edit(request, pk):
+    post = Post.objects.get(pk=pk)
+
+    if request.method == 'POST':
+        title = request.POST['title']
+        text = request.POST['text']
+
+        post.title = title
+        post.text = text
+        post.save()
+        return redirect('post-detail', pk=pk)
+
+    else:
+        context = {
+            'post': post
+        }
+        return render(request, 'post_edit.html', context)
+```
+
+위와 같이 get으로 해당 post를 얻고 request로 얻은 값을 기존 데이터에 덮어 써준 뒤 save() 함수를 통해 저장해주면 된다.
+
+
+
+## post_publish 구현하기
+
+[publish 미션] 
+
+- pk에 해당하는 Post의 published_date를 업데이트
+- 요청시점의 시간을 해당 Post의 published_date에 기록할 수 있도록 한다
+- 완료후에는 post-detail로 이동
+- 결과를 볼 수 있도록, 리스트 화면에서 published_date도 출력하도록 한다
+
+
+
+[unpublish 미션]
+
+- pk에 해당하는 Post의 published_date에 None을 대입 후 save()
+- 완료후에는 post-detail로 이동
+- 결과를 볼 수 있도록, 리스트 화면에서 published_date도 출력하도록 한다
+
+
+
+우선 publish_date가 표시될 수 있도록 html을 먼저 수정해보자.
+
+```python
+# templates/post_list.html 해당 영역 코드 수정
+
+<div class="text-right">
+	<div>작성일 : {{ post.created_date }}</div>
+    <div>발행일 : {{ post.published_date }}</div>
+</div>
+```
+
+
+
+timezone.now() 함수를 사용해 발행하기 버튼을 클릭 시 해당 시간이 기록 되도록 하고, 반대로 발행 취소 버튼 클릭시에는 기록되어있던 시간 값을 None으로 바꾼다.
+
+```python
+# config/views.py
+
+def post_publish(request, pk):
+    post = Post.objects.get(pk=pk)
+    post.published_date = timezone.now()
+    post.save()
+    return redirect('post-detail', pk=pk)
+
+
+def post_unpublish(request, pk):
+    post = Post.objects.get(pk=pk)
+    post.published_date = None
+    post.save()
+    return redirect('post-detail', pk=pk)
+```
+
+
+
+```python
+# config/settings.py urlspatterns에 아래 코드 추가
+
+path('post-detail/<int:pk>/publish/', post_publish, name="post_publish"),
+path('post-detail/<int:pk>/unpublish/', post_unpublish, name="post_unpublish"),
+```
+
+
+
+발행일이 없을때는 발행 버튼을 표시하고, 발행일이 있을때는 발행취소 버튼을 표시하도록 post_list.html을 수정해보자.
+
+```python
+{% extends 'base.html' %}
+{% block content %}
+{% for post in posts %}
+<div class="card mb-3">
+    <div class="card-body">
+        <a href="{% url 'post-detail' pk=post.pk %}">
+        	<h5 class="card-title">{{ post.title }}</h5>
+        </a>
+        <p class="card-text">{{ post.text|linebreaksbr|truncatechars:250}}</p>
+        <div class="text-left">
+            <a href="{% url 'post-delete' pk=post.pk %}" class="btn btn-danger btn-sm">
+            	삭제
+            </a>
+            <a href="{% url 'post-edit' pk=post.pk %}" class="btn btn-info btn-sm">
+            	수정
+           	</a>
+            {% if post.published_date %}
+            <form action="{% url 'post-unpublish' pk=post.pk %}" method="POST">
+                {% csrf_token %}
+                <br>
+                <button type="submit" class="btn btn-info btn-sm">발행취소</button>
+            </form>
+            {% else %}
+            <form action="{% url 'post-publish' pk=post.pk %}" method="POST">
+                {% csrf_token %}
+                <br>
+                <button type="submit" class="btn btn-info btn-sm">발행</button>
+            </form>
+            {% endif %}
+        </div>
+        <div class="text-right">
+            <div>작성일 : {{ post.created_date }}</div>
+            {% if post.published_date %}
+                <div>발행일 : {{ post.published_date }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+```
+
+
+
+여기까지 djangogirls와 조금은 다르지만 tutorial 학습이 모두 끝났다:)
 
 
 
