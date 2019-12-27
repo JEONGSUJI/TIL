@@ -615,6 +615,27 @@ def post_detail(request, pk):
     return render(request, 'post-detail.html', context)
 ```
 
+> filter : QuerySet을 반환한다.
+>
+> get : 정확하게 1개만 가져오고 싶을 때 사용한다.
+
+
+
+> QuerySet 객체의 특징
+>
+> - 모델의 클래스의 인스턴스들이 여러개 담겨있다.
+> - list처럼 사용 가능하다 (for문 순회 가능)
+> - save()가 없다.
+
+
+
+> save()
+>
+> - 변경사항 저장 / 저장할때는 하나의 row씩 저장한다.
+> - blog.models.Post는 한 row를 나타낸다.
+> - filter 후 update하는 것은 save와 동일한 동작이다.
+> - update는 특정 필드 값만 변경한다.
+
 
 
 - 위 코드를 실행한 뒤 없는 pk가 입력된 경우 오류화면이 출력되니 '없음' 문구를 try-exept 구문을 사용해서 출력해보자

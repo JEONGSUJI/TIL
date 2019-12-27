@@ -25,6 +25,14 @@ LANGUAGE_CODE = 'ko'
 TIME_ZONE = 'Asia/Seouls'
 ```
 
+>위 방법은 django 버전이 3.0 이상인 경우 적용하는 방법이고, 이하라면 아래를 적용
+>
+>```python
+>
+>```
+>
+>
+
 
 
 ##### INSTALLED_APPS 알아보기

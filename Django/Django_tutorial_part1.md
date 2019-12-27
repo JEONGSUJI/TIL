@@ -16,14 +16,17 @@
 
 [코드 요약]
 
-```
+```python
 $ mkdir django_tutorial_study
 $ cd django_tutorial_study
 $ pyenv virtualenv 3.7.5 polls-env
 $ pyenv local polls-env
 $ pip install 'django<3.0'
-
+$ pip freeze > requirements.txt
 $ pycharm-community .
+
+# shell_plus를 jupyter notebook으로 사용하고자 할 경우 선택적으로 추가
+$ pip install django-extenstions notebook
 ```
 
 Project Interpreter 설정 완료하기

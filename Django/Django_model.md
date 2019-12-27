@@ -286,13 +286,13 @@ class Pizza(models.Model):
 
 위 코드를 보면 Pizza 모델은 여러개의 Topping 객체를 가질 수 있다. Topping은 여러개의 Pizza에 올라갈 수 있으며, Pizza 역시 여러개의 Topping을 가질 수 있다.
 
-- recursive relationships와 relationshipts tod models not yet defined를 만들 수 있다.
+- recursive relationships와 relationshipts to models not yet defined를 만들 수 있다.
 
 - 어떤 모델이 `ManyToManyField`를 갖는지는 중요하지 않지만, 오직 관계되는 둘 중 하나의 모델에만 존재해야한다.
 
 
 
-#### Extra fields on many-to-manu relationships
+#### Extra fields on many-to-many relationships
 
 두 모델 사이의 관계와 데이터를 연결해야할 수도 있다.
 
@@ -424,4 +424,24 @@ many to many recursive는 모두 참조할 수 있기 떄문에 _set이 없다.
 ---
 
 extra_field는 
+
+
+
+---
+
+부모입장에서 전체 테이블을 가져오고 싶고, 쿼리를 따로 하고싶을때 multitable
+
+
+
+multitable보다는 abstract를 써라. multitable은 여러테이블을 거쳐와야함(join)
+
+파이썬 로직만 추가하고싶을때 proxy를 사용한다.
+
+
+
+migration 없는 상태로 돌리는 코드
+
+```
+./manage.py migrate proxy zero
+```
 
