@@ -64,7 +64,7 @@ def vote(request, question_id):
     else:
         selected_choice.votes += 1
         selected_choice.save()
-        return HttpResponseRedirect(reverse('polls:results', args=(question_id)))
+        return HttpResponseRedirect(reverse('polls:results', args=(question_id,)))
 ```
 
 - request.POST는 키로 전송된 자료에 접근할 수 있도록 해주는 사전과 같은 객체이다. request.POST의 값은 항상 문자열이다.
