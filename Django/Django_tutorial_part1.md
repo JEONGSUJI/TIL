@@ -19,14 +19,15 @@
 ```python
 $ mkdir django_tutorial_study
 $ cd django_tutorial_study
-$ pyenv virtualenv 3.7.5 polls-env
-$ pyenv local polls-env
-$ pip install 'django<3.0'
+$ pyenv virtualenv 3.7.5 polls-env-study
+$ pyenv local polls-env-study
+$ pip install django
 $ pip freeze > requirements.txt
 $ pycharm-community .
 
 # shell_plus를 jupyter notebook으로 사용하고자 할 경우 선택적으로 추가
-$ pip install django-extenstions notebook
+# 진행 시 config/settings.py 코드 내 INSTALLED_APPS에 'django_extensions' 추가 필요
+$ pip install django_extensions notebook
 ```
 
 Project Interpreter 설정 완료하기
@@ -70,8 +71,8 @@ mysite/
 ### 개발서버 실행
 
 ```python
-$ python manage.py migrate
-$ python manage.py runserver
+$ ./manage.py migrate
+$ ./manage.py runserver
 ```
 
 브라우저에서 `localhost:8000`에 접속하면 Django 개발 서버가 실행된 화면을 확인할 수 있다.
@@ -126,6 +127,7 @@ polls/
 from django.shortcuts import render
 from django.http import HttpResponse
 
+
 def index(request):
     return HttpResponse("Hello")
 ```
@@ -135,9 +137,9 @@ Django에서 가장 간단한 형태의 뷰이다. 뷰를 호출하려면 연결
 
 
 ```python
-# polls.urls.py 생성 후 아래 코드 추가
+# polls/urls.py 생성 후 아래 코드 추가
 
-from django.urls import paths
+from django.urls import path
 
 from . import views
 
