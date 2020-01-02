@@ -14,14 +14,15 @@
 # polls/views.py
 
 def detail(request, question_id):
-    return HttpResponse("You're looking at question %s." % question_id)
+    return HttpResponse("You're looking at question {}".format(question_id))
+
 
 def results(request, question_id):
-    response = "You're looking at the results of question %s."
-    return HttpResponse(response % question_id)
+    return HttpResponse("You're looking at the results of question {}".format(question_id))
+
 
 def vote(request, question_id):
-    return HttpResponse("You're voting on question %s." % question_id)
+    return HttpResponse("You're voting on question {}".format(question_id))
 ```
 
 
@@ -44,7 +45,7 @@ urlpatterns = [
 ]
 ```
 
-브라우저에 `/polls/34`를 입력해보자. 이 주소에 접속하면 detail()  함수를 호출하여 URL에 입력한 ID를 출력할 것이다. `/polls/34/results/`와 `/polls/34/votes/`를 입력하면  해당 링크에 맞는 화면이 표시될 것이다.
+브라우저에 `http://localhost:8000/polls/34`를 입력해보자. 이 주소에 접속하면 detail()  함수를 호출하여 URL에 입력한 ID를 출력할 것이다. `/polls/34/results/`와 `/polls/34/votes/`를 입력하면  해당 링크에 맞는 화면이 표시될 것이다.
 
 
 
@@ -89,6 +90,19 @@ def index(request):
 
 
 
+```python
+# config/setting.py 아래 코드 추가
+
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
+
+TEMPLATES = [
+    {
+        'DIRS': [TEMPLATE_DIR],
+    }
+```
+
+
+
 다음과 같이 폴더 구조를 만들고 코드를 입력한다.
 
 ```python
@@ -103,7 +117,6 @@ def index(request):
 {% else %}
     <p>No polls are available.</p>
 {% endif %}
-
 ```
 
 
@@ -140,7 +153,7 @@ from django.shortcuts import render
 from .models import Question
 
 def index(request):
-    latest_question_list = Qustion.objects.order_by('-pub_date')[:5]
+    latest_question_list = Qustion.objequesticts.order_by('-pub_date')[:5]
     context = {'latest_question_list': latest_question_list}
     return render(request, 'polls/index.html', context)
 ```
@@ -154,6 +167,8 @@ def index(request):
 질문의 상세 뷰에 태클을 걸어보자
 
 ```python
+# polls/views.py
+
 from django.http import Http404
 from django.shortcuts import render
 
