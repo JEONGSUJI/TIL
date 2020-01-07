@@ -109,7 +109,7 @@ $ ./manage.py migrate
 
 
 
-Post 모델 admin 등록
+### Post 모델 admin 등록
 
 ```python
 # members > admin.py
