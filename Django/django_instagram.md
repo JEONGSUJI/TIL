@@ -995,3 +995,436 @@ def post_list(request):
 {% endblock %} 
 ```
 
+
+
+## PostLike 기능 구현
+
+**[주어진 조건]**
+
+pk가 pk인 Post와 (변수명 post사용)
+
+request.user로 전달되는 User (변수명 user사용)에 대해
+
+- PostLike(post=post, user=user)인 PostLike객체가 존재하는지 확인한다.
+
+- 만약 해당 객체가 이미 있다면, 삭제한다.
+- 만약 해당 객체가 없다면 새로 만든다.
+- 완료 후 posts:post-list로 redirect한다.
+- URL: /posts/<pk>/like/
+
+```python
+# posts/views.py
+
+def post_like(request, pk):
+     post = Post.objects.get(pk=pk)
+     user = request.user
+    
+    post_like_qs = PostLike.objects.filter(post=post, user=user)
+    
+    if post_like_qs.exists():
+        post_like_qs.delete()
+	else:
+        PostLike.objects.create(post=post, user=user)
+	return redirect('posts:post-list')
+```
+
+
+
+**[주어진 조건]**
+
+post_like에 POST요청을 보내는 Form구현 
+
+- input을 갖지 않음 
+
+- csrf_token만 추가 {# {% url %} #}
+
+- 보내는 곳(action)에, url 태그를 적절히 활용 
+
+  ex) /posts/1/like/ 
+
+  ​      /posts/2/like/ 
+
+- Post의 pk에 따라 위와 같은 URL을 동적으로 생성해야 함
+
+- 사용 가능한 변수는 user(USER), post(POST)
+- 좋아요 눌린 상태 : PostLike 객체가 존재하는 상태PostLike.objects.filter(user=user,post=post).exist()
+- user와 post.like_users를 적절히 이용해서 현재 request.user가 이 Post의 like_users에 포함되는지를 검사해서 아래의 if/else/endif 구문이 동작하도록 작성해본다.
+- Template에서의 메서드 콜    post.like_users.all() -> post.like_users.all    호출구문을 제외해야한다.in operator<변수> in <반복가능개체(QuerySet 등)>-> True, False를 반환
+
+
+
+```python
+# posts/urls.py에 아래 path 추가
+
+urlpatterns = [
+    path('<int:pk>/like/', post_like, name'post-like')
+]
+```
+
+
+
+```python
+# templates/posts/post-list.html
+
+{% block content %}
+	{% for post in posts %}
+		<form action="{% url 'posts:post-like' pk=post.pk %}" method="POST">
+			{% csrf_token %}
+            
+            {% if post in user.like_post__set.all %}
+            	<div>좋아요 눌림</div>
+            {% else %}
+            	<div>좋아요 안눌림</div>
+            {% endif %}
+            
+            <button type="submit">좋아요</button>
+		</form>
+	{% endfor %}
+{% endblock %}
+```
+
+
+
+> {% if post in user.like_post__set.all %} 대신
+>
+> {% if user in post.like_users. all %}을 사용할 수 있다.
+
+
+
+## Signup_view 구현
+
+**[주어진 조건]**
+
+- Template: index.html을 그대로 사용 
+- action만 이쪽으로 URL: /members/signup/ 
+
+
+
+- User에 name필드를 추가 
+- email username name password 를 전달받아, 새로운 User를 생성
+- 생성 시, User.objects.create_user() 메서드를 사용한다
+- 이미 존재하는 username또는 email을 입력한 경우, "이미 사용중인 username/email입니다" 라는 메시지를 HttpResponse로 돌려줌
+- 생성에 성공하면 로그인 처리 후 (위의 login_view를 참조) posts:post-list로 redirect처리
+
+
+
+```python
+# templates/members/index.html
+# 기존 코드에 name 값 추가 / action 경로 설정 
+
+<form action="{% url 'members:signup_view' %}" method="POST">
+	{% csrf_token %}
+    {{ form }}
+    <div>{{request.user}}</div>
+    <div>{{request.user.is_authenticated}}</div>
+    <input type="email" name="email" class="form-control mt-3" placeholder="이메일 주소">
+    <input type="text" name="username" class="form-control mt-3" placeholder="성명">
+    <input type="text" name="name" class="form-control mt-3" placeholder="사용자 이름">
+    <input type="password" name="password" class="form-control mt-3" placeholder="비밀번호">
+    <button type="submit" class="btn btn-primary btn-md mt-3 btn-block">가입</button>
+</form>
+```
+
+```python
+# members/models.py
+
+class User(AbstractUser):
+	name = models.CharField('이름', max_length=100)
+```
+
+```python
+# members/views.py
+
+def signup_view(request):
+
+    email = request.POST['email']
+    username = request.POST['username']
+    name = request.POST['name']
+    password = request.POST['password']
+    
+    
+    if User.objects.filter(username=username).exists():
+		return HttpResponse('이미 사용중인 username입니다.')
+    if User.objects.filter(email=email).exists():
+        return HttpResponse('이미 사용중인 email입니다.')
+    
+    user = User.objects.create_user(email=email, username=username, name=name, password=password)
+    
+    login(request, user)
+        
+    return redirect('posts:post-list')
+```
+
+
+
+로그인이 되었는지 확인하기 위해 출력
+
+```python
+# posts/post-list.html
+
+<div>User: {{ request.user }}</div>
+<div>Authenticated: {{ request.user.is_authenticated }}</div>
+```
+
+
+
+## Logout view 구현
+
+**[주어진 조건]**
+
+- GET 요청으로 처리함
+- 요청에 있는 사용자를 logout 처리
+- django.contrib.auth.logout 함수를 사용한다.
+
+
+
+- URL: /members/logout/
+- Template: 없음
+
+
+
+참고 : https://docs.djangoproject.com/en/3.0/topics/auth/default/#django.contrib.auth.logout
+
+
+
+```python
+# templates/posts/post-list.html
+<a href={% url 'members:logout' %}>로그아웃</a>
+```
+
+```python
+# members/urls.py
+urlpatterns = [
+    path('logout/', views.logout_view, name="logout")
+]
+```
+
+```python
+# members/views.py
+
+def logout_view(request):
+    logout(request)
+    return redirect("members:login")
+```
+
+
+
+## Post_create 구현
+
+### 기본구조 구현
+
+**[주어진 조건]**
+
+- URL: 			/posts/create/, name='post-create'
+- Template:    /posts/post-create.html
+- forms.          PostCreateForm을 사용
+
+
+
+참고 : https://docs.djangoproject.com/en/2.2/topics/forms/#building-a-form
+
+
+
+```python
+# posts/urls.py
+path('create/', post_create, name="post-create")
+```
+
+```python
+# posts/forms.py
+
+class PostCreateForm(forms.Form):
+    image = forms.ImageField()
+    text = forms.CharField()
+```
+
+```python
+# posts/views.py
+from .forms import PostCreateForm
+
+def post_create(request):
+    form = PostCreateForm()
+    context = {
+        'form':form
+    }
+    
+    return render(request, 'posts/post-create.html', context)
+```
+
+```python
+# posts/post-create.html
+
+<form action="">
+	{{ form }}
+    <button type="submit">작성</button>
+</form>
+```
+
+
+
+### 기능 구현 1) 포스트 추가 기능
+
+기능 구현을 확인하기 위해 html내 아래 내용 추가
+
+```python
+# posts/post-list.html 내 아래 내용 추가
+
+<a href="{% url 'posts:post-create' %}">포스트 추가</a>
+...
+{% for post in posts %}
+	<div>{{ post.author }}</div>
+    <div>{{ post.created }}</div>
+    <div>{{ post.content }}</div>
+```
+
+```python
+# post/views.py
+
+def post_list(request):
+    if request.method == 'POST':
+        image = request.FILES['image']
+        text = request.POST['text']
+        
+        post = Post.objects.create(
+        	author=request.user,
+            content=text
+        )
+        
+        post.postimage_set.create(image=image)
+        
+        return redirect('posts:post-list')
+    else:
+        form = PostCreateForm()
+        context = {
+            'form':form,
+        }
+        return render(request, 'posts/post-create.html', context)
+```
+
+```python
+# posts/post-create.html
+
+<form action="" method="POST" enctype="multipart/form-data">
+	{% csrf_token %}
+	{{ form }}
+    <button type="submit">작성</button>
+</form>
+```
+
+
+
+> 이미지 파일을 올리고자 할 때 `entype="multipart/form-data"`을 꼭 입력해주어야한다.
+
+
+
+### 기능 구현 2) post-list 페이지에서 Post에 연결된 PostImage 출력 기능
+
+```python
+# posts/post-list.html
+
+<div>
+	{% for post_image in post.postimage_set.all %}
+    	<div>{{post_image.image.url}}</div>
+        <img srt="{{post_image.image.url}}" alt="">
+	{% endfor %}
+<div>
+```
+
+
+
+### 기능 구현 3) 포스트 추가 시 여러장의 사진을 한 번에 올릴 수 있도록 함
+
+
+
+참고: https://docs.djangoproject.com/en/3.0/topics/http/file-uploads/
+
+
+
+```python
+# posts/forms.py
+
+image = forms.ImageField(
+	widget=forms.ClearableFileInput(
+    	attrs={
+            'multiple': True
+        }
+    )
+)
+```
+
+```python
+# posts/views.py
+
+text = request.POST['text']
+images = request.FILES.getlist('image')
+
+post = Post.objects.create(author=request.user, content=text)
+
+for image in images:
+    post.postimage_set.create(image=image)
+```
+
+
+
+> **settings.py의 ALLOWED_HOSTS 설정**
+>
+> 기본적으로 ALLOWED_HOSTS는 [] 로 입력이 되어있지만 기본 설정이 'localhost', '127.0.0.1'이 들어있다고 생각하면된다.
+>
+> 그 밖의 ip주소가 입력되길 원한다면 이곳에 추가해주면 된다.
+
+
+
+## Comment Create 기능 구현
+
+[주어진 조건]
+
+- URL: /posts/<int:post_pk>/comments/create/
+
+- Template: 없음 (post-list.html내에 Form을 구현) 
+
+- post-list.html 내부에서, 각 Post마다 자신에게 연결된 PostComment목록을 보여주도록 함 
+
+- 보여주는 형식은 아래와 같이 처리
+
+  ```
+  <ul>
+       <li><b>작성자명</b> <span>내용</span></li>
+       <li><b>작성자명</b> <span>내용</span></li>
+  </ul>
+  ```
+
+
+
+```python
+# posts/urls.py path추가
+
+path('<int:post_pk>/comments/create', views.comment_create, name="comment-create"),
+```
+
+```python
+# posts/views.py
+
+def comment_create(request, post_pk):
+    if request.method == 'POST':
+        post = Post.objects.gets(pk=post_pk)
+        content = request.POST['content']
+        
+        post.postcomment_set.create(
+        	author=request.user,
+            content=content,
+        )
+        
+        return 
+```
+
+```html
+# templates/posts/post-list.html
+
+<div>
+    <form action="{% url 'posts:comment-create' post_pk=post_pk %}" method="POST">
+    {% csrf_token %}
+	<textarea name="content" cols="30" rows="3"></textarea>
+	<button type="submit">작성</button>
+    </form>
+</div>
+```
