@@ -118,3 +118,24 @@ instagram
 ```
 def post_like(request, pk):    """    pk가 pk인 Post에 대한    1. PostLike 객체를 생서한다.    2. 만약 해당 객체가 이미 있다면, 삭제한다.    3. 완료 후 posts:post-list로 redirect한다.    """
 ```
+
+
+
+---
+
+1/8
+
+장고 기본유저나 Custom 유저냐 상관없이
+
+유저 모델에 관계없이 불러와 사용할 수 있음
+
+```
+User = get_user_model()
+```
+
+
+
+https://docs.djangoproject.com/en/3.0/topics/forms/
+
+form을 class로 관리하기
+
