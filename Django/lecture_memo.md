@@ -139,3 +139,12 @@ https://docs.djangoproject.com/en/3.0/topics/forms/
 
 form을 class로 관리하기
 
+
+
+---
+
+1/9
+
+로그인 폼 사용하기
+
+forms.py > login.html >members/view.py
