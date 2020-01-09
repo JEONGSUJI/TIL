@@ -1428,3 +1428,363 @@ def comment_create(request, post_pk):
     </form>
 </div>
 ```
+
+
+
+
+
+## CommentCreateForm을 사용
+
+[주어진 조건]
+
+- Form 인스턴스를 만드는데, data에 request.POST로 전달된 dict를 입력 / form = CommentCreateForm(data=request.POST) 
+- Form 인스턴스 생성시, 주어진 데이터가 해당 Form이 가진 Field들에 적절한 데이터인지 검증
+
+
+
+> **form의 is_valid () 메소드 호출**
+>
+> is_valid ()가 True 인 경우, 이제 validate_data 속성에서 확인 된 모든 양식 데이터를 찾을 수 있습니다. 이 데이터를 사용하여 다음 경로를 알려주는 HTTP 리디렉션을 브라우저로 보내기 전에 데이터베이스를 업데이트하거나 다른 처리를 수행 할 수 있습니다.
+>
+> True가 아닌 경우 양식이있는 템플릿으로 돌아간다. 돌아간 템플릿 화면에서는 이전에 작성 된 데이터로 HTML 양식이 채워지며 필요에 따라 편집하고 수정할 수 있습니다.
+
+참고 : https://docs.djangoproject.com/en/3.0/topics/forms/#building-a-form-in-django
+
+
+
+```python
+# posts/forms.py
+
+class CommentCreateForm(forms.Form):
+    content = forms.CharField(
+    	max_length=10,
+        widget=forms.Textarea()
+    )
+    
+    def save(self, post, author):
+        return post.postcomment_set.create(
+        	author=author,
+            content=self.cleaned_date['content']
+        )
+```
+
+```python
+# templates/posts/post-list.html
+
+<form action="{% url 'posts:comment-create' post_pk=post_pk %}" method="POST">
+	{% csrf_token %}
+    <textarea name="content" cols="30" rows="3"></textarea>
+    {{comment_form}}
+    <button type="submit">작성</button>
+</form>
+```
+
+```python
+# posts/views.py
+
+post = Post.objects.order_by('-pk')
+comment_form = CommentCreateForm()
+context = {
+    'posts': posts,
+    'comment_form': comment_form,
+}
+return redner(request, 'posts/post-list.html', context)
+
+def comment_create(request, post_pk):
+    if request.method == 'POST':
+        post = Post.objects.get(pk=post_pk)
+        
+        if form.is_valid():
+            form.save(post=post, author=request.user)
+        return redirect('posts:post-list')
+```
+
+
+
+
+
+## LoginForm 구현하기
+
+### Login Form추가
+
+
+
+#### `authenticate(request=None, **credentials)`
+
+- authenticate()를 사용하여 자격 증명 세트를 확인하십시오.
+- 자격 증명은 키워드 인수, 기본 사용자 이름 및 암호로 기본 인증 백엔드에 대해 확인하고 자격 증명이 백엔드에 유효한 경우 User 객체를 반환합니다.
+- 자격 증명이 백엔드에 유효하지 않거나 백엔드가 PermissionDenied를 올리면 None을 반환합니다. 
+
+참고 https://docs.djangoproject.com/en/3.0/topics/auth/default/#django.contrib.auth.authenticate
+
+
+
+```python
+# members/forms.py
+
+class LoginForm(forms.Form):
+    username = forms.CharField(
+    	widget = forms.TextInput(
+        	attrs={
+                'class': 'form-control',
+                'placeholder': '아이디',
+            }
+        )
+    )
+    password = forms.CharField(
+    	widget = forms.PasswordInput(
+        	attr={
+                'class': 'form-control',
+                'placeholder': '비밀번호',
+            }
+        )
+    )
+```
+
+> **widget**은 type을 설정해주는 것이고, **attr**은 속성을 적용해주는 것이다.
+
+```html
+<!-- members/login.html
+form으로 변경하기 위해, html 변경 -->
+
+<form action="" method="POST">
+    {% csrf_token %}
+    // form이 가진 field들을 순회하며, 매 순회마다 .form-group 요소를 만듬
+    {% for field in form %}
+    	<div class="form-group">{{ field }}</div>
+    {% endfor %}
+    <button class="btn btn-primary btn-block">로그인</button>
+</form>
+```
+
+```python
+# members/views.py
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            return redirect('posts:post-list')
+        else:
+            return redirect('members:login')
+	form = LoginForm()
+    context = {
+        'form': form,
+    }
+    return render(request, 'members/login.html', context)
+```
+
+```python
+# posts/urls.py urlpatterns에 path추가
+
+path('<int:post_pk>/comments/create/', views.comment_create, name='comment-create')
+```
+
+
+
+### LoginForm의 login, clean 메서드 구현
+
+#### `clean()` 
+
+- Field 서브 클래스의 clean() 메소드는 to_python(), validate() 및 run_validators()를 올바른 순서로 실행하고 오류를 전파한다.
+
+- 언제라도 메소드가 ValidationError를 발생시키면 유효성 검사가 중지되고 해당 오류가 발생한다.
+- 이 메소드는 clean data를 return한 후 양식의 정리된 data dictionary 에 삽입된다. (Form이 가진 모든 Field들에서 return된 데이터가 key: value로 들어있음)
+
+참고 : https://docs.djangoproject.com/en/3.0/ref/forms/validation/
+
+
+
+```python
+# members/forms.py
+
+class LoginForm(forms.Form):
+    username = forms.CharField(
+    	widget = forms.TextInput(
+        	attrs={
+                'class': 'form-control',
+                'placeholder': '아이디',
+            }
+        )
+    )
+    password = forms.CharField(
+    	widget = forms.PasswordInput(
+        	attr={
+                'class': 'form-control',
+                'placeholder': '비밀번호',
+            }
+        )
+    )
+    
+    def clean(self):
+        username = self.cleaned_data['username']
+        password = self.cleaned_data['password']
+        user = authenticate(username=username, password=password)
+        if not user:
+            raise ValidationError('username 또는 password가 올바르지 않습니다')
+        return self.cleaned_data
+    
+    def login(self, request):
+        username = self.cleaned_data['username']
+        password = self.cleaned_data['password']
+        user = authenticate(request, username=username, password=password)
+        login(request, user)
+```
+
+```python
+# members/views.py
+
+def login_view(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            form.login(request)
+            return redirect('posts:post-list')
+        else:
+            return redirect('members:login')
+```
+
+
+
+## LoginForm의 errors를 템플릿에서 출력
+
+```python
+# members/views.py
+
+def login_view(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            form.login(request)
+            return redirect('posts:post-list')
+	else:
+		form = LoginForm()
+        context = {
+            'form': form
+        }
+```
+
+>**Rendering from error messages**
+>
+>참고 : https://docs.djangoproject.com/en/3.0/topics/forms/#rendering-form-error-messages
+
+```html
+<!-- members/login.html -->
+
+{% if form.non_field_errors %}
+	<ul class="list-unstyled text-danger">
+        {% for error in form.non_field_errors %}
+        	<li>{{ error|excape }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+```
+
+
+
+## index view 삭제, SignupForm의 field구현 및 HTML에 표시
+
+**[주어진 조건]**
+
+- Template: index.html을 복사해서 /members/signup.html
+- URL:  /
+- Form: members.forms.SignupForm 생성에 성공하면 로그인 처리 후 (위의 login_view를 참조) posts:post-list로 redirect처리
+
+
+
+```python
+# config/urls.py
+# path('', views.index, name='index'),를 변경
+
+path('', signup_view, name='signup')
+```
+
+```python
+# members/urls.py
+# path('signup/', views.signup_view, name='signup') 삭제
+```
+
+```python
+# members/views.py
+
+def signup_view(request):
+    if request.method == 'POST':
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('posts:post-list')
+    else:
+        form = SignupForm()
+        
+    context = {
+        'form': form,
+    }
+    return render(request, 'members/signup.html', context
+```
+
+```python
+# members/forms.py
+
+class SignupForm(forms.Form):
+	email = forms.EmailField(
+    	widget=forms.EmailInput(
+        	attrs={
+                'class':'form-control',
+                'placeholder':'이메일'
+            }
+        )
+    )    
+    name = forms.CharField(
+    	widget=forms.TextInput(
+        	attrs={
+                'class':'form-control',
+                'placeholder':'이름'
+            }
+        )
+    )    
+    username = forms.CharField(
+    	widget=forms.TextInput(
+        	attrs={
+                'class':'form-control',
+                'placeholder':'사용자명'
+            }
+        )
+    )    
+    password = forms.CharField(
+    	widget=forms.PasswordInput(
+        	attrs={
+                'class':'form-control',
+                'placeholder':'비밀번호'
+            }
+        )
+    )    
+    
+    def clear(self):
+        pass
+    
+    def save(self):
+        pass
+```
+
+```html
+<!-- templates/index.html을 templates/members/signup.html로 이동 -->
+
+<form action="{% url 'signup' %}" method="POST">
+    {% csrf_token %}
+    {% for field in form %}
+    	<div class="form-group">
+        	{{ field }}    
+    	</div>
+    {% endfor %}
+</form>
+```
+
+```html
+<!-- members/login.html -->
+<!-- <a href="{% url 'index' %}">가입하기</a> -->
+<a href="{% url 'signup' %}">가입하기</a>
+```
+
