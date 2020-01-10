@@ -1784,7 +1784,94 @@ class SignupForm(forms.Form):
 
 ```html
 <!-- members/login.html -->
+
 <!-- <a href="{% url 'index' %}">가입하기</a> -->
 <a href="{% url 'signup' %}">가입하기</a>
 ```
 
+
+
+### 특정 필드 속성 정리를 활용하여 `def clean()` 분리 및 에러메세지 출력
+
+
+
+어떤 필드에 양식과 관련된 유효성 검사를 하고 싶은 경우, 일반적인 Field 클래스에 넣는 것이 아닌 `def clean_recipients(self)`를 정의해 처리한다. 메소드가 바뀌지 않아도, 언제나 새로운 cleaned data를 반환한다.
+
+```python
+def clean_recipients(self):
+    data = self.cleaned_data['recipients']
+    if "fred@example.com" not in data:
+        raise forms.ValidationError("You have forgotten about fred!")
+    return data
+```
+
+참고: https://docs.djangoproject.com/en/3.0/ref/forms/validation/#cleaning-a-specific-field-attribute
+
+
+
+```python
+# members/forms.py 에서 def clean영역을 clean_username과 clean email로 분리
+
+def clean_username(self):
+    username = self.cleaned_data['username']
+    if User.objects.filter(username=username).exists():
+        raise ValidationError('이미 사용중인 username입니다.')
+	return username
+        
+def clean_email(self):
+    email = self.cleaned_data['email']
+    if User.objects.filter(email=email).exists():
+        raise ValidationError('이미 사용중인 email입니다.')
+	return email
+
+def save(self):
+    # Form으로 전달받은 데이터를 사용해서 새로운 User를 생성하고 리턴
+    return User.objects.create_user(
+    	username = self.cleaned_data['username']
+        email = self.cleaned_data['email']
+        name = self.cleaned_data['name']
+        password = self.cleaned_data['password']
+    )
+```
+
+```python
+# members/views.py
+
+def signup_view(request):
+    if request.method == 'POST'
+    	form = SignupForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('posts:post-list')
+	else:
+        form = SignupForm()
+	context = {
+        'form': form
+    }
+    return render(request, 'members/signup.html', context)
+```
+
+```html
+<!-- templates/members/signup.html -->
+
+{% if field.errors %}
+	<ul class="list-unstyled text-danger text-left mt-0 pt-0" style="margin-top: -15px !important"
+        {% for error in field.errors %}
+        	<li>{{ error }}</li>
+		{% endfor %}
+	</ul>
+{% endif %}
+
+{% if form.non_field_errors %}
+	<ul class="list-unstyled text-danger">
+        {% for error in form.non_field_errors %}
+        	<li>{{ error }}</li>
+        {% endfor %}
+	</ul>
+{% endif %}
+```
+
+
+
+> 추가학습 필요 : `field.errors`와 `non_field_errors`의 차이
