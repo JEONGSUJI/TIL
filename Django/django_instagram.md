@@ -7,6 +7,30 @@ Django를 활용하여 Instagram을 만드는 과정을 적어보겠습니다.
 ## 초기 환경 세팅
 
 ```python
+$ mkdir instagram
+$ cd instagram
+
+$ pyenv virtualenv 3.7.5 instagram-env
+$ pyenv local instagram-env
+
+$ pip install 'django<3.0'
+$ pip freeze > requirements.txt
+
+$ django-admin startproject config
+$ mv config app		# 외부 config 폴더명을 app으로 변경
+
+$ pycharm-community .	# pycharm 실행
+
+$ cd app
+$ ./manage.py startapp members
+$ ./manage.py startapp posts
+
+pycharm에서 interpreter 설정
+```
+
+
+
+```
 instagram
 	ㄴ app 					# 루트폴더 지정!
     						# 폴더에서 마우스 오른쪽 버튼 클릭 Mark Directory as > Source Root
@@ -16,28 +40,6 @@ instagram
 		manage.py
 		requirements.txt
 	.gitignore
-```
-
-
-
-```python
-$ mkdir instagram
-$ cd instagram
-
-$ pyenv virtualenv 3.7.5 instagram-env
-$ pyenv local instagram-env
-
-$ django-admin startproject config
-$ mv config app				# 외부 config 폴더명을 app으로 변경
-
-$ pip install 'django<3.0'
-$ pip freeze > requirements.txt
-
-pycharm에서 interpreter 설정
-
-$ cd app
-$ ./manage.py startapp member
-$ ./manage.py startapp posts
 ```
 
 
@@ -84,7 +86,7 @@ from members.models import User
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField(blank=True)
-    like_users = models.ManyToManyField(User, through='PostLike', related_name='like_posts_set',)
+    like_users = models.ManyToManyField(User, through='PostLike', related_name='like_post_set',)
     created = models.DateTimeField(auto_now_add=True)
     
 class PostImage(models.Model):
@@ -98,7 +100,7 @@ class PostComment(models.Model):
     
 class PostLike(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
 ```
 
@@ -137,6 +139,17 @@ class PostLikeAdmin(admin.ModelAdmin):
 
 
 
+### 관리자 계정 생성하기
+
+```python
+$ ./manage.py createsuperuser
+$ ./manage.py runserver
+```
+
+`localhost:8000/admin` 접속 후 admin 로그인 한 뒤 우리가 바로 위에서 추가한 Post, PostImage, PostComment,PostLike가 목록에 출력되는지 확인하기
+
+
+
 
 
 ## 이미지 파일 경로 설정하기
@@ -144,10 +157,6 @@ class PostLikeAdmin(admin.ModelAdmin):
 
 
 ### 이미지 추가하기
-
-```python
-$ ./manage.py createsuperuser
-```
 
 `localhost:8000/admin` 접속 후 `Post images`에 add하여 이미지 추가해보면 소스폴더 근처 어딘가에 이미지가 추가된 것이 보일텐데 우리가 원하는 경로에 이미지를 저장해보자
 
@@ -216,9 +225,9 @@ urlpatterns += static(
 )
 ```
 
-> 참고: howto/static-files/
+> 참고: howto/static-files/ (https://docs.djangoproject.com/ko/3.0/howto/static-files/)
 
-위와 같이 코드를 추가해주면 admin 사이트에서 이미지를 클릭했을때 이미지가 나온다 (링크를 설정해준 것)
+위와 같이 코드를 추가해주면 admin 사이트에서 이미지를 클릭했을때 이미지가 나온다. (링크를 설정해준 것)
 
 
 
@@ -236,11 +245,13 @@ TIME_ZONE = 'Asia/Seoul'
 
 
 
-미션
+**[미션]**
 
 - Model : Post의 `__str__`을 적절히 작성한다.
 - Admin : 작성자, 글, 작성시간이 보여지게 한다. (list_display)
 - 상세화면에서 PostImage, PostComment를 바로 추가할 수 있도록 한다. (inlines, TabularInline)
+
+참고 : https://docs.djangoproject.com/en/2.2/ref/contrib/admin/
 
 
 
@@ -263,7 +274,6 @@ class PostCommentInline(admin.TabularInline):
     
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    pass
 	list_display = ('author', 'content', 'created')
     list_display_links = ('author', 'content')
     inlines = [
@@ -298,11 +308,6 @@ class Post(models.Model):
 
 
 
-> 참고 : https://docs.djangoproject.com/en/2.2/ref/contrib/admin/
->
-
-
-
 ### 유저모델 추가하기
 
 ```python
@@ -334,7 +339,7 @@ admin 페이지 내 유저 모델 관리자에서 한명 추가하고 브라우�
 
 > **쿠키 기반 사용자 세션**
 >
-> 쿠키 기반으로 사용자의 <u>연결을 유지하는 것</u>(세션)을 말한다. 다시말하면, 세션을 유지하기 위해 쿠키라는 저장공간을 사용하는 것을 말한다.
+> 쿠키 기반으로 사용자의 <u>연결을 유지하는 것</u>(세션)을 말한다. 다시말해, 세션을 유지하기 위해 쿠키라는 저장공간을 사용하는 것을 말한다.
 >
 > client는 server에 요청을 보내면, server는 client에 응답을 보내는데 이는 1회성으로 응답이 끝나면 사라진다.
 
@@ -358,13 +363,13 @@ admin 페이지 내 유저 모델 관리자에서 한명 추가하고 브라우�
 >
 > 4) 응답에 세션 value를 보내준다. 이는 client 쿠키에 키와 값으로 저장된다.
 >
-> 위 과정이 끝나고 난 뒤 client에서 server에 요청을 보낼때는 쿠키의  키:값도 함께 보낸다. 보내는 중간에 인증검사가 이루어진다. sessionId가 일치하면 value가 세션테이블 있는지 확인하고 있다면 로그인 정보를 유지한다. 그래서 네이버에서 다른 화면으로 가도 로그인 정보가 유지될 수 있는 것이다.
+> 위 과정이 끝나고 난 뒤 client에서 server에 요청을 보낼때는 쿠키의  키:값도 함께 보낸다. 보내는 중간에 인증검사가 이루어진다. sessionId가 일치하면 해당하는 value가 세션테이블에 있는지 확인한다. 있다면 로그인 정보를 유지한다. 그래서 네이버에서 다른 화면으로 가도 로그인 정보가 유지될 수 있는 것이다.
 
 
 
 > **추가) 자동로그인 정보**
 >
-> 로그인 상태 유지 혹은 자동로그인에 체크를 하게되면, ID/PW + 자동로그인할 것인지에 대한 정보고 같이 보내지게 된다. 이는 expire Date를 넘겨주어 timeout이 지정된다.
+> 로그인 상태 유지 혹은 자동로그인에 체크를 하게되면, ID/PW + 자동로그인할 것인지에 대한 정보도 같이 보내지게 된다. 이는 expire Date를 넘겨주어 timeout이 지정된다.
 
 
 
@@ -453,8 +458,12 @@ urlpatterns = [
 from django.shortcuts import render
 
 def index(request):
-    return render(request, 'index')
+    return render(request, 'index.html')
 ```
+
+
+
+### Login_view 기능 구현
 
 
 
@@ -478,6 +487,7 @@ def index(request):
 <body>
     <h1>LOGIN!</h1>
     <form method="POST">
+        {% csrf_token %}
         <input type="text" name="username">
         <input type="password" name="password">
         <button type="submit">로그인</button>
@@ -523,7 +533,7 @@ urlpatterns = [
 우선 해결에 앞서 `localhost:8000/members/login`에 접속하면 login.html을 render하도록 해보자.
 
 ```python
-# members > urls.py
+# members > views.py
 
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
@@ -534,6 +544,8 @@ def login_view(request):
 ```
 
 
+
+이제 확인했으니 POST로 받은 정보를 넘겨주어 login 되도록 처리해보자.
 
 ```python
 # members > views.py
@@ -558,36 +570,6 @@ def login_view(request):
 
     else:
         return render(request, 'members/login.html')
-```
-
-
-
-
-
-## Login_view 기능 구현
-
-```python
-# members/views.py
-
-from django.contrib.auth import authenticate, login
-from django.shortcut import render, redirect
-
-def login_view(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        print('username:', username)
-        print('password:', password)
-        user = authenticate(request, username=username, password=password)
-        print('user:', user)
-        
-        if user:
-            login(request, user)        
-            return redirect('index')
-        else:
-            return redirect('members:login')
-        
-	return render(request, 'members/login.html')
 ```
 
 
@@ -654,7 +636,7 @@ STATICFILES_DIRS = [
 
 ### base.html 생성하여 템플릿 분리
 
-미션
+[미션]
 
 - base.html추가 상단에 {% load static %}
 - 정적파일 불러올 때 {% static '경로' %}로 불러옴
@@ -687,7 +669,7 @@ STATICFILES_DIRS = [
 
 
 
-> **{% load static %}** : 템플릿 태그 모듈을 가져온다. 이미 만들어져있지만 사용하려고 한다면 적어주어야한다.
+> **{% load static %}** : 템플릿 태그 모듈을 가져온다. 이미 django 내 만들어져있지만, 사용하려고 한다면 적어주어야한다.
 
 
 
@@ -734,15 +716,6 @@ STATICFILES_DIRS = [
         </div>
     </div>
 {% endblock %} 
-```
-
-
-
-```python
-# config/views.py
-
-def index(request):
-    return render(request, 'index.html')
 ```
 
 
@@ -835,7 +808,7 @@ form에 입력한 값을 보내도록 처리하가 위해, method="POST"로 변�
 <form method="POST">
 	{% csrf_token %}
     <div class="form-group">
-        <input name="username" type="text" class="form-control" placeholder="휴대폰 번호 또는 이메일 주소">
+        <input name="username" type="text" class="form-control" placeholder="이메일 주소">
 	</div>
     <div class="form-group">
     	<input name="password" type="password" class="form-control" placeholder="비밀번호">
@@ -860,7 +833,7 @@ form에 입력한 값을 보내도록 처리하가 위해, method="POST"로 변�
 
 ## Post_list url, view, template연결
 
-미션
+[미션]
 
 - 로그인 완료 후 이 페이지로 이동하도록 함 
 - index에 접근할 때 로그인이 되어 있다면, 이 페이지로 이동하도록 함 
@@ -888,6 +861,7 @@ from django.urls import path
 from . import views
 
 app_name = 'posts'
+
 urlpatterns = [
     path('', views.post_list, name="post-list"),
 ]
@@ -966,6 +940,8 @@ def post_list(request):
 
 
 ```html
+<!-- templates/posts/post-list.html -->
+
 {% extends 'base.html' %}
 
 {% block content %}
@@ -974,24 +950,6 @@ def post_list(request):
         <div>{{ post.author }}</div>
         <div>{{ post.created }}</div>
     {% endfor %}
-
-    <div class="container-fluid">
-        <div class="card" style="border-radius: 1px;">
-            <div class="card-header p-3">lhy</div>
-            <div class="card-body p-3">
-                <div class="btn-container">
-                    <button class="btn btn-sm btn-outline-primary">Like</button>
-                    <button class="btn btn-sm btn-outline-primary">Comment</button>
-                </div>
-
-                <div>lhy님 외 35명이 좋아합니다</div>
-                <ul class="comment-list">
-                    <li>lhy 장고너무좋아요</li>
-                    <li>pjh 진짜그렇네요!</li>
-                </ul>
-            </div>
-        </div>
-    </div>
 {% endblock %} 
 ```
 
@@ -1006,11 +964,12 @@ pk가 pk인 Post와 (변수명 post사용)
 request.user로 전달되는 User (변수명 user사용)에 대해
 
 - PostLike(post=post, user=user)인 PostLike객체가 존재하는지 확인한다.
-
 - 만약 해당 객체가 이미 있다면, 삭제한다.
 - 만약 해당 객체가 없다면 새로 만든다.
 - 완료 후 posts:post-list로 redirect한다.
 - URL: /posts/<pk>/like/
+
+
 
 ```python
 # posts/views.py
@@ -1070,8 +1029,9 @@ urlpatterns = [
 	{% for post in posts %}
 		<form action="{% url 'posts:post-like' pk=post.pk %}" method="POST">
 			{% csrf_token %}
-            
-            {% if post in user.like_post__set.all %}
+            <div>{{ post.author }}</div>
+            <div>{{ post.created }}</div>
+            {% if post in user.like_post_set.all %}
             	<div>좋아요 눌림</div>
             {% else %}
             	<div>좋아요 안눌림</div>
@@ -1189,7 +1149,7 @@ def signup_view(request):
 
 ```python
 # templates/posts/post-list.html
-<a href={% url 'members:logout' %}>로그아웃</a>
+<a href="{% url 'members:logout' %}">로그아웃</a>
 ```
 
 ```python
