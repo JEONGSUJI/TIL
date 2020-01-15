@@ -90,7 +90,7 @@ class Post(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     
 class PostImage(models.Model):
-    post = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
     image = models.ImageField()
     
 class PostComment(models.Model):
@@ -1192,6 +1192,7 @@ path('create/', post_create, name="post-create")
 
 ```python
 # posts/forms.py
+from django import forms
 
 class PostCreateForm(forms.Form):
     image = forms.ImageField()
@@ -1374,7 +1375,7 @@ def comment_create(request, post_pk):
             content=content,
         )
         
-        return 
+        return redirect('posts:post-list')
 ```
 
 ```html
@@ -1442,7 +1443,8 @@ class CommentCreateForm(forms.Form):
 ```python
 # posts/views.py
 
-post = Post.objects.order_by('-pk')
+def post_list(request):
+posts = Post.objects.order_by('-pk')
 comment_form = CommentCreateForm()
 context = {
     'posts': posts,
@@ -1453,6 +1455,7 @@ return redner(request, 'posts/post-list.html', context)
 def comment_create(request, post_pk):
     if request.method == 'POST':
         post = Post.objects.get(pk=post_pk)
+        form = CommentCreateForm(data=request.POST)
         
         if form.is_valid():
             form.save(post=post, author=request.user)
@@ -1835,3 +1838,266 @@ def signup_view(request):
 
 
 > 추가학습 필요 : `field.errors`와 `non_field_errors`의 차이
+
+
+
+
+
+## Post의 해시태그 구현
+
+**[주어진 미션]**
+
+- ManyToMany에서, 필드는 Post에 클래스 작성
+- HashTag의 Tag를 담당
+- Post입장에서 post.tags.all()로 연결된 전체 Tag를 불러올 수 있어야 한다.
+- Tag 입장에서 tags.post.all()로 연결된 전체 Post를 불러올 수 있어야 한다.
+- Django admin에서 결과를 볼 수 있도록 admin.py에 적절히 내용을 기록해준다.
+
+
+
+- tag 구현하기 TagAdmin 모델 추가하기
+
+> **readonly_fields**
+>
+> ModelAdmin.fieldsets를 통해 명시적 순서를 정의하지 않고 readonly_fields를 사용하는 경우 편집 가능한 모든 필드 다음에 마지막에 추가됩니다.
+>
+> (참고 : https://docs.djangoproject.com/en/3.0/ref/contrib/admin/#django.contrib.admin.ModelAdmin.readonly_fields)
+
+```python
+# posts/admin.py PostAdmin에 TagAdmin 추가
+# readonly_fields 추가
+
+from .models import Post, PostImage, PostComment, PostLike, Tag
+
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ('author', 'content', 'created')
+    list_display_links = ('author', 'content')
+    inlines = [
+        PostImageInline,
+        PostCommentInline,
+    ]
+    readonly_fields = ('tags',)
+    
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    pass
+```
+
+
+
+```python
+# posts/models.py에 Post class 수정 및 Tag 클래스 생성
+
+import re
+from django.db import models
+from members.models import User
+
+class Post(models.Model):
+    TAG_PATTERN = re.compile(r'#(\w+)')
+    
+    author = models.ForeignKey(User, on_delete=models.CASCASE)
+    content = models.TextField(blank=True)
+    like_users = models.ManyToManyField(
+    	User, through='PostLike', related_name='like_post_set',
+    )
+    
+    tags = models.ManyToManyField(
+    	'Tag', verbose_name='해시태그 목록', related_name='posts', blank=True
+    )
+    created = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return '{author} | {created}'.format(
+        	author=self.author.username,
+            created=self.created,
+        )
+    
+    def save(self,*args,**kwargs):
+        super().save(*args, **kwargs)
+        tag_name_list = re.findall(self.TAG_PATTERN, self.content)
+        tags = [Tag.objects.get_or_create(name=tag_name)[0] for tag_name in tag_name_list]
+        self.tags.set(tags)
+        
+class Tag(models.Model):
+    name = models.CharField('태그명', max_length=100)
+    
+    def __str__(self):
+        return self.name
+```
+
+
+
+### 정규표현식 학습하기
+
+```python
+import re
+content = '''오늘은 신나는 #Django 웹프로그래밍스쿨 오는날
+#WPS#웹프로그래밍스쿨#Django#Python'''
+
+# 해시태그 목록을 문자열 리스트로 가져오기 //  ['Django', 'WPS', '웹프로그래밍스쿨', 'Python']
+pattern = re.compile(r'#(\w+)')
+list(set(re.findall(pattern, content)))
+
+# 해시태그에 해당하는 문자열을 '(태그: <해당문자열>)'이라는 문자로 치환하기
+# "ex: 오늘은 신나는 (태그: Django) 웹프로그래밍스쿨 오는날"
+re.sub(pattern,'\g<1>' ,content)
+
+# post에 저장해보기
+post = Post.objects.first()
+post.content = '#Python #Django'
+post.save()
+
+# post에 해시태그를 저장해보기
+tag_name_list = re.findall(pattern, post.content)
+for tag_name in tag_name_list:
+    tag = Tag.objects.get_or_create(name=tag_name)[0]
+    post.tags.add(tag)
+    
+# post에 해시태그 부분을 <a> tag로 바꾸기
+post.content = '''신나는 WPS #Python #Django'''
+post.save()
+
+import re
+p = re.compile(r'#(\w+)')
+post.content = re.sub(p, r'<a href="/explore/tags/\g<1>/">\g<1></a>`,post.content)
+post.save()          
+# 출력되는 값
+# '신나는WPS <a href=\"/explore/tags/Python/\">Python</a> <a href=\"/explore/tags/Django/\">Django</a>'
+```
+
+
+
+이제 위에서 적용해보며 알아본 정규 표현식을 실제 코드에 적용해보기
+
+```python
+# posts/forms.py에 text 영역을 widget으로 변경
+
+class PostCreateForm(forms.Form):
+    image = forms.ImageField(
+    	widget=forms.ClearableFileInput(
+            attrs={
+                'class': 'form-control-file',
+                'multiple': True,
+            }
+        )
+    )
+    text = forms.CharField(
+        widget=forms.ClearableFileInput(
+            attrs={
+                'class': 'form-control',
+            }
+        )
+    )
+```
+
+```python
+# posts/models.py content_html 추가 및 def save 변경
+
+class Post(models.Model):
+    
+    content = models.TextField(blank=True)
+    content_html = models.TextField(blank=True)
+        
+    def _save_html(self):
+        # content 속성의 값을 사용해서 해시태그에 해당하는 문자열을 a태그로 바꾸어준다.
+        # return되는 값은 해시태그가 a태그로 변환된 html
+        
+        self.content_html = re.sub(
+        	self.TAG_PATTERN,
+            r'<a href="/explore/tags/\g<1>/">#\g<1></a>'
+            self.content,
+        )
+	
+    def _save_tags(self):
+        # content에 포함된 해시태그 문자열 Tag들을 만들고 자신의 tags Many-to-many field에 추가함
+        tag_name_list = re.findall(self.TAG_PATTERN, self.content)
+        tags = [Tag.objects.get_or_create(name=tag_name)[0] for tag_name in tag_name_list]
+        self.tags.set(tags)
+        
+	def save(self, *arg, **kwargs):
+        self._save_html()
+        super().save(*args, **kwrargs)
+        self._save_tags()        
+```
+
+
+
+html코드가 문자열 그대로 출력되는 현상을 해결하기 위해 **safe**를 사용한다.
+
+(참고: https://docs.djangoproject.com/en/3.0/ref/templates/builtins/#safe)
+
+```html
+<!-- posts/post-list.html에 글내용 부분을 html코드로 보일 수 있도록 safe 속성 적용 -->
+
+<div>글내용 : {{ post.content_html|safe }}</div>
+```
+
+
+
+## post_list에서 tag내용으로 filter하는 기능 추가
+
+
+
+```python
+# jupyter notebook
+
+Post.objects.all()
+# <QuerySet [<Tag: happy>, <Tag: 태그명>>과 같이 출력됨
+
+Tag.objects.all()
+# "Django: 1\n",
+# "Python: 1\n" 과 같이 출력됨
+
+for tag in Tag.objects.all():
+    result = '{tag}: {posts}'.format(
+    	tag=tag.name,
+        posts=', '.join([str(post.pk) for post in tag.posts.all()]),
+    )
+    print(result)
+
+# <QuerySet [{'pk': 1}, {'pk': 12}, {'pk': 13}]> 와 같이 출력됨
+
+# 박보영 이라는 name을 가진 Tag를 자신의 tags 목록에 갖고있는 Post의 경우
+# filter의 조건(키워드)명으로
+# ManyToMany등, RelatedField의 Forward연결이라면, 해당 필드면 사용
+# Backward의 경우 related_name이 지정되어있다면 사용하고, 지정되어있지 않다면 연결되는 모델의 lowercase문자열 (_set이 안붙음)
+
+Post.objects.filter(tags_name__iexact='Django').values('pk')
+```
+
+
+
+> tags_name__iexact='Django'
+
+
+
+```python
+# config/urls.py path 추가
+
+urlpatterns = [
+    path('explore/tags/<str:tag>/', post_list, name='post-list-by-tag')
+]
+```
+
+
+
+tag가 들어오면 해당하는 화면으로 이동시키고, 들어오지 않으면 post-list.html로 이동하게 처리
+
+```python
+# posts/views.py
+
+def post_list(request, tag=None):
+	if tag is None:
+        posts = Post.objects.order_by('-pk')
+	else:
+        posts = Post.objects.filter(tags__name__iexact=tag).order_by('-pk')
+        
+	comment_form = CommentCreateForm()
+    context = {
+        'posts': posts,
+        'comment_form': comment_form,
+    }
+    return render(request, 'posts/post-list.html', context)
+```
+
