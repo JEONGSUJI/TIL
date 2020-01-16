@@ -1,0 +1,119 @@
+/* 공통 영역 */
+
+a{
+    color: #000000;
+}
+
+a:hover{
+    text-decoration:none;
+}
+
+.container-fluid{
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* col-2 navbar 영역 */
+.col-2{
+    padding:0;
+    border-right: 1px solid rgba(225, 225, 225, 0.8);
+}
+
+.navbar {
+    padding:0;
+    position: fixed;
+    width: 15%;
+}
+
+.navbar .list-group .list-group-item{
+    border: none;
+    min-width: 30px;
+    width: auto;
+    height: 50px;    
+    margin: 5px 0;
+    padding: 0 15px 0 0;
+    font-weight: bold;
+}
+
+.navbar .list-group .list-group-item a i{
+    font-size: 1.5rem;
+    margin: 15px;
+}
+
+.navbar .list-group .list-group-item a span{
+    font-size: 1.1rem;
+}
+
+.navbar .list-group li:hover{
+    background: #edf7fa;
+    border-radius: 25px;
+    color: #1da1fe;
+}
+
+.navbar .list-group .logo{
+    width: 55px;
+    height: 55px;
+}
+
+/* col-5 영역 main content */
+
+.col-5{
+    width: 100%;
+    padding: 0;
+}
+
+.nav-info-bar{
+    position: fixed;
+    background-color: #ffffff;
+    width: 600px;
+    height: 55px;
+    padding: 5px 0;
+    line-height: 50px;
+    border-bottom: 1px solid rgba(225, 225, 225, 0.8);
+}
+
+.nav-info-bar a{
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.content{
+    margin: 55px 10px 0 10px;
+}
+
+/* col-3 영역 Search 및 Tag */
+
+.col-3{
+    padding: 0;
+    border-left: 1px solid rgba(225, 225, 225, 0.8);
+}
+
+.side-box{
+    padding-left: 20px;
+}
+
+.search{
+    position: fixed;
+    background-color: rgba(225, 225, 225, 0.8);
+    width: 300px;
+    height: 55px;
+    padding: 5px 0 5px 20px;
+    line-height: 50px;
+    right: 150px;
+    border-radius: 30px;
+}
+
+.search i{
+    line-height: 50px;
+}
+
+.tag-box{
+    margin: 65px 0 0 30px;
+}
+
+.search-bar{
+    border: none;
+    line-height: 55px;
+    background-color: transparent;
+    color: gray
+}
