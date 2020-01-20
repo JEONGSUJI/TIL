@@ -1095,6 +1095,9 @@ class User(AbstractUser):
 ```python
 # members/views.py
 
+# 장고 기본유저나 Custom 유저모델 중 사용중인 User 모델을 가져옴
+User = get_user_model()
+
 def signup_view(request):
 
     email = request.POST['email']
@@ -2037,6 +2040,15 @@ html코드가 문자열 그대로 출력되는 현상을 해결하기 위해 **s
 
 ## post_list에서 tag내용으로 filter하는 기능 추가
 
+[주어진 미션]
+
+- Many-to-many에서 필드는 Post에 클래스에 작성
+- HashTag의 Tag를 담당
+- Post입장에서 post.tags.all()로 연결된 전체 Tag를 불러올 수 있어야 함
+- Tag 입장에서 tag.posts.all()로 연결된 전체 Post를 불러올 수 있어야 함
+- Django admin에서 결과를 볼 수 있도록 admin.py에 적절히 내용 기록
+- 중계모델(Intermediate model)을 사용할 필요 없음
+
 
 
 ```python
@@ -2066,9 +2078,9 @@ for tag in Tag.objects.all():
 Post.objects.filter(tags_name__iexact='Django').values('pk')
 ```
 
-
-
-> tags_name__iexact='Django'
+> tags_name__iexact='Django' 는 Django 대소문자 구분없이 검사한다.
+>
+> tags_name='Django'는 __exact가 생략되어 있는 것으로 대소문자를 구분해 검사한다.
 
 
 
@@ -2101,3 +2113,250 @@ def post_list(request, tag=None):
     return render(request, 'posts/post-list.html', context)
 ```
 
+>models.save보다 form.save가 나중에 일어나서 `readonly_fields = ('tags',)`를 해줘야함
+
+
+
+
+
+## 네이버 로그인 기능 구현
+
+**[OAuth기능(소설로그인) 동작방법 설명]**
+
+User/Consumer/Service Provider 세가지의 제공자가 있다.
+
+User는 네이버로그인을 시도하는 사용자, Consumer은 네이버 아이디와 같이 간편 로그인을 지원하는 쇼핑몰 또는 웹페이지, Provider는 간편 로그인 API를 지원하는 Naver를 의미한다. 각각을 `U`/`C`/`S`라고 칭해보겠다.
+
+1. `U`가 `C`에 `S`를 통한 로그인을 하겠다고 req를 보낸다.
+2. `C`가 redirect해서 `S` 사이트로 가라고 알려준다. 이때 callbackURL을 포함한다.
+3. `U`는 `S` 사이트에 로그인을 한다. 로그인이 되어있다면 `S`가 요청에 대한 확인을 받는다. 그럼 다시 callbackURl로 이동하는데 그때 callback token을 전달해준다. `S`는 `C`에게 code를 전달한다.
+4. `C`는 `S`에게 request access token을 요청한다.
+
+5. `S`는 `C`에게 response access_token을 전달(password나 id를 전달하진 않음)한다.
+6. access_token을 받으면 `C`는 다시 `S`에게 유저정보를 달라고 요청하는데 access token을 함께 보낸다. 이것이 key이다. (계정정보를 요청할 수 있는 것이 access token / 매칭이 되는 unique한 값을 만들어서 access token에 담아놓는다.) 
+7. `S`는 `C`에게 인증을 거쳐서 User info를 전달한다. 이때 `S`에서  unique한 id를 전달해준다. (`U`가 가진 유일한 id값을 보내주는데, 요청할 때마다 항상 같은 id라 이것으로 사용자를 구분한다. unique한 id는 `S` 에 회원가입을 할 때 이미 만들어져있는 값이다.)
+
+
+
+unique id를 받았을 때, Django에서 처리하는 방법은 여러가지이다.
+
+그대로 사용하거나, f_를 앞에 붙여서 저장하거나, type을 나눠 저장한다.
+
+
+
+우리는 비밀번호 값이 없어도 네이버에서 인증된 유저라는 것을 확신하면 로그인이 되게 처리해야한다.
+
+`AuthenticationBackend`를 Django가 지원한다. 기본적으로 지원하는 것을 model login이라고 한다.
+
+session과는 별개이다.
+
+
+
+> **왜 access token을 바로 주지 않을까?**
+>
+> ClientID: 공개값 / 네이버 로그인 버튼을 만들 때 사용 / 사용자가 OK해도 token만 돌려준다.
+>
+> ClientSecret: 비공개값 / oauth2.0/token / token + secret -> access_token
+
+
+
+- https://developers.naver.com/main/ 회원가입 
+- 애플리케이션 등록 
+
+(애플리케이션 이름: 마음대로 / 사용 API: 네아로 + 제공정보 미선택 / 로그인 오픈  API 서비스 환경: PC 웹 / 서비스 URL:
+
+ http://localhost:8000 / 네이버 아이디로 로그인 Callback URL: http://localhost:8000/members/naver-login/)
+
+
+
+https://developers.naver.com/docs/login/api/ 참고하여 구현
+
+
+
+페이스북 로그인 버튼을 네이버 로그인 버튼으로 변경
+
+```html
+<!-- members/login.html -->
+
+<a href="{{ login_url }}" class="btn btn-block btn-outline-success mb-3">NAVER로 로그인</a>
+```
+
+
+
+naver login url 추가
+
+```python
+# members/urls.py naver login url 추가
+
+urlpatterns = [
+    path('naver-login/', views.naver_login, name='naver-login'),
+]
+```
+
+
+
+naver login을 위한 a 태그 href 주소
+
+```python
+$ pip install requests
+```
+
+```python
+# members/views.py
+
+def login_view(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            form.login(request)
+            return redirect('posts:post-list')
+        else:
+            form = LoginForm()
+            
+	# naver login을 위한 a 태그 href 주소
+	login_base_url = 'https://nid.naver.com/oauth2.0/authorize'
+    login_params = {
+        'response_type': 'code',
+        'client_id': '클라이언트 id 입력',
+        'redirect_uri': 'http://localhost:8000/members/naver-login/',
+        'state': 'RANDOM_STATE,
+    }
+    login_url = '{base}?{params}'.format(
+    	base=login_base_url,
+        params='&'.join(f'{key}={value}' for key,value in login_params.items()])
+    )
+    context = {
+        'form': form,
+        'login_url': login_url,
+    }
+    return render(request, 'members/login.html', context)
+```
+
+
+
+naver login 추가
+
+```python
+def naver_login(request):
+    code = request.GET.get('code')
+    state = request.GET.get('staet')
+    
+    if not code or not state:
+        return HttpResponse('code또는 state가 전달되지 않았습니다.')
+    
+    token_base_url = 'https://nid.naver.com/oauth2.0/token'
+ 	token_params = {
+        'grant_type': 'authorization_code',
+        'client_id': '클라이언트 아이디 입력',
+        'client_secret': '클라이언트 시크릿 입력',
+        'code': code,
+        'state': state,
+        'redirectURI': 'https://localhost:8000/members/naver-login/',
+    }
+    token_url = '{base}?{params}'.format(
+        base=token_base_url,
+        params='&'.join([f'{key}={value}' for key, value in token_params.items()])
+    )
+    response = requests.get(token_url)
+    access_token = response.json()['access_token']
+    print(access_token)
+
+    me_url = 'https://openapi.naver.com/v1/nid/me'
+    me_headers = {
+        'Authorization': f'Bearer {access_token}',
+    }
+    me_response = requests.get(me_url, headers=me_headers)
+    me_response_data = me_response.json()
+    print(me_response_data)
+
+    unique_id = me_response_data['response']['id']
+    print(unique_id)
+
+    # n_{unique_id} 의 username을 갖는 새로운 User를 생성
+    #  ex) n_11041464
+    # 생성한 유저를 login시킴
+    # posts:post-list로 이동시킴
+    
+    naver_username = f'n_{unique_id}'
+    if not User.objects.filter(username=naver_username).exists():
+        user = User.objects.create_user(username=naver_username)
+    else:
+        user = User.objects.get(username=naver_username)
+    login(request, user)
+    return redirect('posts:post-list')
+```
+
+>`'state': request.GET['state']`와 `'state': request.GET.get('state')`는 동일한 결과를 반환
+
+
+
+
+
+## + Cron
+
+특정 작업을 고정된 시간, 날짜, 간격에 주기적으로 실행항 수 있도록 스케줄링하기 위해 cron을 사용한다.
+
+(참고 : https://ko.wikipedia.org/wiki/Cron)
+
+
+
+`~/projects/wps12th/instagram/app/manage.py stats`을 터미널에서 입력했을때 우리가 원하는 명령이 실행되도록 만들어보자.
+
+./manage.py 명령어 추가하기 : 우리가 원하는 명령어는 instagram/.media/now.txt를 생성하고, 1분마다 현재시간을 기록한다. 만약 파일이 이미 있다면 다음줄에 기록하고, 파일이 없다면 파일을 생성하고 기록한다.
+
+
+
+```python
+$ crontab -l	# 작업목록 확인
+$ crontab -e	# 수동등록
+
+$ * * * * * ~/.pyenv/versions/wps-instagram-env/bin/python ~/projects/wps12th/instagram/app/manage.py stats
+```
+
+> cron을 사용할 때는 전체 경로를 입력해주어야한다.
+
+
+
+Django에 맞게 해당 명령어 입력시  실행할 수 있도록 편집해보자
+
+```python
+def handle(self, *args, **options):
+        now = timezone.now()
+
+        with open(os.path.join(MEDIA_ROOT, 'now.txt'), 'at') as f:
+            time_str = f'Now: + {timezone.localtime(now).strftime("%Y-%m-%d %H:%M:%S")}\n'
+            f.write(time_str)
+```
+
+
+
+변경사항 출력해보기
+
+```python
+$ tail -f
+$ tail -f ../media/now.txt
+```
+
+
+
+## +. Migrate 
+
+`manage.py makemigrations <app>`
+
+모델 클래스의 변경사항을 migration으로 생성
+
+
+
+`manage.py migrate <app> <migration>`
+
+migration에 있는 변경사항을 실제 DB에 적용
+
+migration을 적어줘서 뒤로 돌아가거나 앞으로도 갈 수 있다고 함
+
+단, 뒤로 돌릴 때 데이터도 모두 사라짐에 주의 
+
+
+
+`./manage.py showmigrations`
+
+migration 적용 사항 확인
