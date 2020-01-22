@@ -366,7 +366,7 @@ $ sudo python3 manage.py runserver 0:80
 단, 위와 같은 경우 local에서 코드를 수정 후 다시 서버에 반영 해야 할 경우 문제가 된다. 그때마다 아래와 같은 코드를 입력해주게 되면
 
 ```python
-$ scp -i ~/.ssh/wps12th.pem -r instagram ubuntu@54.180.115.96:/home/ubuntu/projects
+$ scp -i ~/.ssh/wps12th.pem -r instagram ubuntu@[IPv4 퍼블릭 IP]:/home/ubuntu/projects
 ```
 
 있던 파일 업로드 시에는 overwrite되어 상관없지만, local에서 파일을 지운 경우에는 반영이 되지 않는다.
@@ -383,9 +383,9 @@ $ scp -i ~/.ssh/wps12th.pem -r instagram ubuntu@54.180.115.96:/home/ubuntu/proje
 
 
 ```python
-$ ssh -i ~/.ssh/wps12th.pem ubuntu@54.180.115.96 rm -rf /home/ubuntu/projects/instagram
+$ ssh -i ~/.ssh/wps12th.pem ubuntu@[IPv4 퍼블릭 IP] rm -rf /home/ubuntu/projects/instagram
 
-$ scp -i ~/.ssh/wps12th.pem -r ~/projects/wps12th/instagram ubuntu@54.180.115.96:/home/ubuntu/projects
+$ scp -i ~/.ssh/wps12th.pem -r ~/projects/wps12th/instagram ubuntu@[IPv4 퍼블릭 IP]:/home/ubuntu/projects
 ```
 
 
@@ -399,7 +399,7 @@ $ scp -i ~/.ssh/wps12th.pem -r ~/projects/wps12th/instagram ubuntu@54.180.115.96
 
 #!/usr/bin/env sh
 IDENTIFY_FILE="$HOME/.ssh/wps12th.pem"
-HOST="ubuntu@54.180.115.96"
+HOST="ubuntu@[IPv4 퍼블릭 IP]"
 ORIGIN_SOURCE="$HOME/projects/wps12th/instagram"
 DEST_SOURCE="/home/ubuntu/projects/instagram"
 SSH_CMD="ssh -i ${IDENTIFY_FILE} ${HOST}"
