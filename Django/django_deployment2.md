@@ -294,6 +294,63 @@ AWS에서 IAM을 설정하자.
 
 
 
+#### SECRET KEY
+
+```python
+import json
+json.loads(json_str)
+json_data = json.loads{json_str}
+```
+
+
+
+```python
+# settings.py
+# secrets.json파일이 ROOT_DIR에 있는 경우
+
+import json
+secrets_path = os.path.join(ROOT_DIR, 'secrets.json')
+json_data = json.load(open(secrets_path))
+
+# 사용하고자 하는 곳에
+sample = json_data['json에 입력한 key값']
+```
+
+
+
+> **참고 사이트**
+>
+> https://docs.python.org/ko/3.9/library/json.html 의 load
+
+
+
+> **Secret값을 저장하는 방법**
+>
+> - 저장하는 별도의 파일을 지정
+>
+>   - [참고사이트](https://github.com/LeeHanYeong/django-json-secrets)
+>
+> - 환경변수에 지정
+>
+>   - ```python
+>     $ env
+>     ```
+>
+>     를 터미널에 입력하면 컴퓨터에 저장된 환경변수를 알 수 있다.
+>
+>   - ```python
+>     $ os.environ
+>     ```
+>
+>     를 터미널에 입력하면 외부 환경변수 값을 가져올 수 있다.
+>
+> - 외부 서비스에 저장하고 API 호출
+>
+>   - AWS SECRET MANAGER
+>   - [참고사이트](https://github.com/LeeHanYeong/django-secrets-manager)
+
+
+
 ---
 
 #### +. AWS 보안그룹의 `인바운드`, `아웃바운드`, DJANGO `ALLOWED_HOST`
