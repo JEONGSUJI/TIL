@@ -1,11 +1,21 @@
 /* 공통 영역 */
 
+*:focus {
+    outline: none;
+}
+
 a{
     color: #000000;
 }
 
 a:hover{
     text-decoration:none;
+    color: #000000;
+}
+
+textarea:focus, input:focus{
+    outline: none;
+    border: none;
 }
 
 .container-fluid{
@@ -33,20 +43,26 @@ a:hover{
     margin: 5px 0;
     padding: 0 15px 0 0;
     font-weight: bold;
+    line-height: 50px;
 }
 
 .navbar .list-group .list-group-item a i{
     font-size: 1.5rem;
-    margin: 15px;
+    margin: 13px 15px 15px 15px;
 }
 
 .navbar .list-group .list-group-item a span{
     font-size: 1.1rem;
+    height: 50px;    
+    line-height: 50px;
 }
 
 .navbar .list-group li:hover{
     background: #edf7fa;
     border-radius: 25px;
+}
+
+.navbar .list-group li:hover a{
     color: #1da1fe;
 }
 
@@ -73,7 +89,7 @@ a:hover{
 }
 
 .nav-info-bar a{
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: bold;
 }
 
@@ -86,34 +102,99 @@ a:hover{
 .col-3{
     padding: 0;
     border-left: 1px solid rgba(225, 225, 225, 0.8);
+    background-color: #fff;
 }
 
 .side-box{
     padding-left: 20px;
 }
 
-.search{
+.search-box{
     position: fixed;
-    background-color: rgba(225, 225, 225, 0.8);
-    width: 300px;
+    width: 400px;
     height: 55px;
+    padding: 15px 0 5px 20px;
+    line-height: 35px;
+    border-radius: 30px;
+    background-color: #fff;
+    z-index: 1;
+}
+
+.search{
+    background-color: rgba(230, 236, 240);
+    width: 350px;
+    height: 35px;
     padding: 5px 0 5px 20px;
-    line-height: 50px;
-    right: 150px;
+    line-height: 35px;
     border-radius: 30px;
 }
 
+.search input{
+    border:none;
+    background-color: transparent;
+    margin-left: 10px;
+    width: 180px;
+    height: 30px;
+    line-height: 30px;
+}
+
+.search input:focus{
+    background-color: transparent;
+}
+
 .search i{
-    line-height: 50px;
+    line-height: 30px;
+    margin-left: 10px;
 }
 
 .tag-box{
-    margin: 65px 0 0 30px;
+    margin: 65px 0 0 20px;
+    background-color: rgba(245, 248, 250);
+    border: none;
+    width: 350px;
+    border-radius: 10px;
 }
 
-.search-bar{
-    border: none;
-    line-height: 55px;
-    background-color: transparent;
-    color: gray
+.tag-title{
+    font-size: 1.2rem;
+    padding: 10px 10px 10px 15px ;
+    margin: 0;
+    font-weight: bold;
+    border-bottom: 1px solid rgb(230, 236, 240);
+}
+
+.tag-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.tag-list li{
+    border-bottom: 1px solid rgb(230, 236, 240);
+    padding: 5px 5px 5px 15px;
+    line-height: 30px;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.tag-list .list-show-more{
+    border-bottom: none;
+    font-weight: normal;
+    font-size: 0.8rem;
+}
+
+.tag-list .list-show-more a{
+    color: blue;
+}
+
+
+.col-1{
+    background-color: #fff;
+}
+
+.img-profile img {
+    border-radius: 100%;
+    width: 100%;
+    height: 50%;
+    max-height: 100px;
 }
