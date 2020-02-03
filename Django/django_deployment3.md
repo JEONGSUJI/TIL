@@ -323,11 +323,9 @@ $ docker run --rm -it -p 8001:8000 instagram
 
 
 
-> docker run --rm -it -p 8001:8000 instagram /bin/bash
+> `docker run --rm -it -p 8001:8000 instagram /bin/bash`와 `docker run --rm -it -p 8001:8000 instagram` 차이?
 >
-> docker run --rm -it -p 8001:8000 instagram
->
-> 차이?
+> 뒤에 /bin/bash를 붙이면 CMD 명령 전까지 실행된다.
 
 
 
@@ -360,8 +358,79 @@ docker설치 및 run 명령어 실행하는 부분을 `deploy-docker.sh` 안에 
 
 
 
+```python
+# deploy-docker.sh
+
+#!/usr/bin/env sh
+IDENTITY_FILE="$HOME/.ssh/wps12th.pem"
+USER="ubuntu"
+HOST="[IPv4 퍼블릭 IP]"
+TARGET=${USER}${HOST}
+ORIGIN_SOURCE="$HOME/projects/fastcampus/12th/instagram/"
+DOCKER_REPO="[DOCKER REPO]"  # 예)"abc/instagram"
+SSH_CMD="ssh -i ${IDENTITY_FILE} ${TARGET}"
+
+echo "==Docker 배포=="
+
+# 서버 초기 설정
+echo "apt update & upgrade & autoremove"
+${SSH_CMD} -C 'sudo apt upgrade && sudo DEBIAN_FRONTEND=noninteractive apt dist-upgrade -y && apt -y autoremove'
+
+echo "apt install docker.io"
+${SSH_CMD} -C 'sudo apt -y install docker.io'
+
+# pip freeze
+echo "pip freeze"
+"$HOME"/.pyenv/versions/3.7.5/envs/wps-instagram/bin/pip freeae > "${ORIGIN_SOURCE}"requirments.txt
+
+# docker build
+echo "docker build"
+docker build -q -t ${DOCKER_REPO} -f Dockerfile "${ORIGIN_SOURCE}"
+
+# docker pushs
+echo "docker push"
+docker push ${DOCKER_REPO}
+
+echo "docker stop"
+${SSH_CMD} -C "sudo docker stop instagram"
+
+echo "docker pull"
+${SSH_CMD} -C "sudo docker pull ${DOCKER_REPO}"
+
+# screen에서 docker run
+echo "screen settings"
+
+# 실행중이던 screen 세션 종료
+${SSH_CMD} -C 'screen -X -S docker quit'
+
+# screen 실행
+${SSH_CMD} -C 'screen -S docker -d -m'
+
+# 실행중인 세션에 명령어 전달
+${SSH_CMD} -C "screen -r docker -X stuff 'sudo docker run --rm -it -p 80:8000 --name=instagram [DOCKER REPO에 기입한 내용]'"
+```
+
+
+
+
+
 >**추가자료**
 >
 >[생활코딩 Docker](pyrasis.com/Docker/Docker-HOWTO#section-3)
 >
 >[가장 빨리 만나는 Docker](http://pyrasis.com/private/2014/11/30/publish-docker-for-the-really-impatient-book)
+
+
+
++ pycharm에서 `plugin ignore`와 `GitToolBox` 설치
+
+
+
++ .dockerignore 파일 생성
+
+```
+/.git
+/.media
+/secrets.json
+```
+
