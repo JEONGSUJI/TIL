@@ -174,6 +174,8 @@ AWS_SECRET_ACCESS_KEY = SECRET['AWS_SECRET_ACCESS_KEY']
 
 ### 환경변수로 secret 값 처리하기
 
+환경변수로 값을 넣는 명령어 `export`
+
 ```python
 $ export AWS_SECRET_ACCESS_KEY=[AWS_SECRET_ACCESS_KEY]
 $ export AWS_ACCESS_KEY_ID=[AWS_ACCESS_KEY_ID]
@@ -209,8 +211,8 @@ scp -q -i "${IDENTITY_FILE}" -r "$HOME/.aws" ${HOST}:/home/ubuntu
 #### [작업 요약]
 
 - 내 컴퓨터에 Key를 저장해놓았다. 이 Key가 있어야만 Secret 값을 불러올 수 있다.
-- EC2를 생성했다. EC2 영역 뿐 아니라 이 안에서 docker container를 또 켰다.
-- docker에서 요청할 때 80번 port 들어온 것을 8000번 port로 container에 보낸다.
+- EC2를 생성했다. EC2 영역 뿐 아니라 이 안에서 docker container를 켰다.
+- docker에서 요청할 때 80번 port 들어온 것을 8000번 port로 container에 보낸다. (EC2 : container)
 - container에서 run할 때 Secret 값이 필요하다. 그러려면 PC에 있는 Key가 필요하기 때문에 전달해줘야한다.
 - EC2안에 runserver없이 container만 생성한다. bin/bash로 PC Key 값을 EC2로 전달한다. (SCP 명령어로 전달한다.)
 - 이제 container에 넣어야 한다. (EC2 -> docker container) `docker cp` 명령어로 전달한다.

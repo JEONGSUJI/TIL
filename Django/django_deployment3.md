@@ -33,7 +33,7 @@ HttpRequest / Web server가 처리하는 것
 
 ```
 WebServer 	-> 	WSGI 	-> 		APP
-(Nginx 등)	(fumucorn,uWSGI 등) (Django 등)
+(Nginx 등)	(gunicorn,uWSGI 등) (Django 등)
 ```
 
 - Web server는 모든 언어에 범용적이라 Python은 WSGI를 중간에 둔다.
@@ -308,6 +308,7 @@ RUN         pip install -r /tmp/requirements.txt
 
 # 소스코드 복사 후 runserver
 COPY        . /srv/instagram
+# WORKDIR이 cd의 의미이다.
 WORKDIR     /srv/instagram/app
 CMD         python manage.py runserver 0:8000
 ```

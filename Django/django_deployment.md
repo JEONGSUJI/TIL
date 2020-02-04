@@ -276,7 +276,7 @@ $ screen -S runserver
 
 
 ```python
-$ sudo python3 manage.pu runserver 0:80
+$ sudo python3 manage.py runserver 0:80
 ```
 
 위 코드를 입력한 후 `ctrl+a+d`를 누르면 현재 작업을 유지하며 screen세션을 빠져나온다.
