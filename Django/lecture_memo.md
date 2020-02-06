@@ -1,7 +1,5 @@
 EC2
 
-
-
 ---
 
 배포를 하려면 docker를 사용해야한다.
@@ -841,8 +839,6 @@ def server_run():
 
 
 
-
-
 deploy-docker-secerts.py
 
 ```python
@@ -876,3 +872,343 @@ instagram.nginx
 server_name default_name;
 ```
 
+
+
+---
+
+20/02/06
+
+
+
+도메인 연결
+
+Com1 - HTTP:80 - Com2
+
+https가 아닌 것으로 보면 내용이 다 나와 해킹에 취약
+
+
+
+암호화
+
+- 대칭키 (원문 -> 키 -> 암호문 / 암호문 -> 키 -> 원문)
+  - 키가 노출되어 암호화 취약
+
+- 공개키 / 개인키 기법
+  - 원문 -> 공개키(암호화) -> 개인키(복호화) -> 원문
+  - 원문 -> 개인키(암호화) -> 공개키(복호화) -> 원문
+  - 개인키 : 절대로 노출되면 안됨
+  - 공개키 : 노출되도 상관없음
+
+A가 B와 통신하고 싶다고 가정
+
+1. A가 자신의 공개키를 HTTP를 사용해 B에게 보냄
+2. B는 A에게 HTTP를 사용해 자신의 공개키를 보냄
+3. A는 B에게 보낼 메세지를 B의 공개키를 사용해서 암호화하여 보냄
+4. B는 받은 메세지를 자신의 "개인키"로 복호화해서 읽는다.
+
+
+
+HTTP에 공개키 / 개인키 가 추가된 것이 HTTPS이다.
+
+
+
+- 해싱 (단방향, 같은 입력에서 같은 hash값이 나오지만 한방향으로만 접근가능)
+
+
+
+`https ssl kidp`
+
+`let's encrypt`
+
+
+
+우리가 해야할 일
+
+- let's encrypt에서 인증서 발급 받기
+- 인증서와 공개키, 개인키를 Nginx가 사용하도록 설정
+- 인증서 자동 갱신되도록 체제 갖추기
+
+
+
+AWS ACM을 사용하면 위 우리가 해야할 일을 모두 해결할 수 있다.
+
+
+
+let's encrypt는 인증서 발급 기관, certbot 프로그램을 이용하면 쉽게 가능하지만 용량이 큼
+
+- 직접 설치 
+
+- docker를 사용해서 실행 
+
+  하면 인증서랑 개인키 공개키가 나옴 이것들이 저장될 영역을 --volume 옵션에 추가하면 EC2에 남음
+
+
+
+docker에 설치하면 container가 날라가면 날라가니까
+
+`docker run --volume` 을 사용해서 Host의 특정 영역과 Container의 특정 영역과 공유
+
+
+
+그림
+
+Host(EC2)
+
+인증서 폴더를 두 Container에 공유 (--volume)
+
+Container(certbot)을 킴
+
+Container(Nginx)를 킴
+
+컨테이너간 통신은 없지만 인증서 폴더만 공유된다. 같은 파일을 공유하고 있는 개념이다.
+
+
+
+dockerhub에 certbot 이미지가 있어서 Container에 실행만해주면된다.
+
+
+
+한글판이 편하다면 `hosting.kr`에서 영어도 괜찮다면 그리고 저렴한걸 원한다면 `namecheap.com`에서 도메인을 구입하자.
+
+네임서버 주소변경 > 신청하기 > 호스팅케이알 네임서버 사용
+
+호스팅케이알 네임서버 사용 체크하기
+
+
+
+```
+ssh -i ~/.ssh/wps12th.pem ubuntu@[IPv4 퍼블릭 IP]
+```
+
+
+
+```
+sudo docker run --rm -it --name certbot -v '/etc/letsencrypt:/etc/letsencrypt' -v '/var/lib/letsencrypt:/var/lib/letsencrypt' certbot/certbot certonly -d 'rarlaj.com,www.rarlaj.com' --manual
+```
+
+이메일 입력(도메인 기한 다되면 연락받을 이메일을 물어봄) > A > N > Y (도메인의 소유주를 입증하겠는지 물어봄)
+
+
+
+```
+sudo docker run --rm -it --name certbot -v '/etc/letsencrypt:/etc/letsencrypt' -v '/var/lib/letsencrypt:/var/lib/letsencrypt' certbot/certbot renew --manual
+```
+
+한 글자라도 오타가나면 다시해야하는 번거로움이 있으니 위 코드는 유의해서 치자!
+
+
+
+```
+Create a file containing just this data:
+
+LPfxSGJHNPPq0BPTeGIFXPvBtOKye28ZgjRamiorj6I.huCS1h54W6cs1JM57stOXCpEMWyrdBw6AN_8uYSvxMI
+
+And make it available on your web server at this URL:
+
+http://rarlaj.com/.well-known/acme-challenge/LPfxSGJHNPPq0BPTeGIFXPvBtOKye28ZgjRamiorj6I
+```
+
+이런식으로 데이터가 출력된다. 
+
+
+
+- instagram에 `.cert` 폴더를 만들고 `./well-known/acme-challenge/` 뒤에 나오는 영어들을 파일명으로 만든다, 확장자는 txt로 한다. 
+- 해당 파일에 `LPfxSGJHNPPq0BPTeGIFXPvBtOKye28ZgjRamiorj6I.huCS1h54W6cs1JM57stOXCpEMWyrdBw6AN_8uYSvxMI` 내용을 넣어주고 저장한다.
+
+
+
+지금 내 경우에는 rarlaj.com과 www.rarlaj.com을 둘 다 등록해놓기로 해놨기 때문에 enter를 입력하면 똑같은 구문이 한번 더 나온다. 그 경우에도 위에서처럼 폴더를 만들어주면 된다.
+
+
+
+nginx로 가서 아래와 같이 수정
+
+```python
+server {
+    # 80번 포트로 온 요청에 응답할 Block임
+    listen 80;
+
+    # HTTP요청의 Host 값 (URL에 입력한 도메인)
+    server_name rarlaj.com www.rarlaj.com;
+
+    # 인코딩 utf-8설정
+    charset utf-8;
+
+    # root로부터의 요청에 대해 응답할 Block
+    location / {
+        # /run/gunicorn.sock 파일을 사용해서 Gunicorn과 소켓 통신하는 Proxy 구성
+        proxy_pass      http://unix:/run/instagram.sock;
+    }
+
+    # http://localhost/static
+    location /static/ {
+        alias           /srv/instagram/.static/;
+    }
+
+    location /.well-known/acme-challenge/ {
+        alias           /srv/instagram/.cert/;
+    }
+}
+```
+
+> *alias* 는 특정 URL이 서빙할 파일 경로를 변경하는 역할을 한다
+
+
+
+./docker-run-secrets.py 로 실행해보기
+
+
+
+`localhost:8001/.well-known/acme-challenge/LPfxSGJHNPPq0BPTeGIFXPvBtOKye28ZgjRamiorj6I`로 접근해서 파일이 다운로드 되는지 확인하기
+
+
+
+ip랑 도메인 연결
+
+hosting.kr에서 네임서버(서브도메인) 설정 관리
+
+서브도메인 wps 레코드타입:서브도메인 ip주소에 ec2 ip 연결
+
+
+
+재배포하기
+
+````
+./deploy-docker-secrets.py
+````
+
+
+
+자신이 설정한 도메인 주소에 접속하면 정상적으로 출력되어야 한다. (rarlaj.com / www.rarlaj.com) 
+
+
+
+key가 잘 전달 되었는지 확인하기 위한 작업
+
+```python
+$ sudo su
+$ cd /etc/letsencrypt/live/도메인주소/
+$ ls -al
+# README  cert.pem  chain.pem  fullchain.pem  privkey.pem
+```
+
+
+
+nginx 설정에 넣어주기
+
+```nginx
+server {
+    listen 80;
+    server_name rarlaj.com www.rarlaj.com;
+    charset utf-8;
+
+    location /.well-known/acme-challenge/ {
+        alias           /srv/instagram/.cert/;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+server{
+    listen 443 ssl;
+    server_name rarlaj.com www.rarlaj.com;
+    charset utf-8;
+
+    location / {
+        proxy_pass      http://unix:/run/instagram.sock;
+    }
+    location /static/ {
+        alias           /srv/instagram/.static/;
+    }
+}
+```
+
+
+
+Host(EC2)
+
+SECURITY GROUP : 80(HTTP)과 22(SSH) 443(HTTPS)  포트가 열려있어야 한다.
+
+
+
+CONTAINER는 80번 포트가 열려있고 80번 포트로 접근 시 HOST로 갔다가 컨테이너 안까지 간다.
+
+22번은 HOST까지만 접근한다.
+
+
+
+nginx에서 우리는 80, 443 블럭을 나눠 요청을 분리했다. 80번 포트로 요청이 오면 gunicorn(socket) 443으로 연결될 경우 연결한다.
+
+
+
+도메인에 대해 80번으로 요청함 -> HTTPS로 RETURN 443으로 접근
+
+
+
+인증서가 etc/letscrypto/live/domain에 있기 때문에 --volume으로 전달해 사용할 수 있도록 한다.
+
+
+
+- deploy-docker-secerts에 추가
+
+```
+('-p', '443:443'),
+
+# Let's Encrypt volume
+    ('-v', '/etc/letsencrypt:/etc/letsencrypt'),
+```
+
+
+
+- nginx ssl 설정 추가
+
+```nginx
+server{
+    listen 443 ssl;
+    server_name rarlaj.com www.rarlaj.com;
+    charset utf-8;
+
+    # https 관련 설정
+    ssl on;
+    ssl_certificate     /etc/letsencrypt/live/rarlaj.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/rarlaj.com/privkey.pem;
+
+    location / {
+        # 일반적으로 proxy로 요청을 넘겨줄 경우 필요한 설정들
+        include         /etc/nginx/proxy_params;
+        proxy_pass      http://unix:/run/instagram.sock;
+    }
+    location /static/ {
+        alias           /srv/instagram/.static/;
+    }
+}
+```
+
+
+
+AWS에 인스턴스 보안그룹편집 인바운드 규칙 편집해서 https 추가
+
+
+
+다시 배포
+
+```
+./deploy-docker-secrets.py
+```
+
+
+
+아래 코드를 입력해서 인증서 갱신을 하도록 하자. letsencrypt는 3개월만 유효하기 때문이다.
+
+```
+sudo docker run --rm -it --name certbot -v '/etc/letsencrypt:/etc/letsencrypt' -v '/var/lib/letsencrypt:/var/lib/letsencrypt' certbot/certbot renew --manual
+```
+
+
+
+위 코드를 매번 입력하기 번거로우니 `crontab -e` 명령어를 실행한 뒤 아래 코드를 입력해서 인증서 갱신을 하도록 하자. letsencrypt는 3개월만 유효하기 때문이다.
+
+```
+0 0 * * * sudo docker run --rm -it --name certbot -v '/etc/letsencrypt:/etc/letsencrypt' -v '/var/lib/letsencrypt:/var/lib/letsencrypt' certbot/certbot renew --manual
+```
