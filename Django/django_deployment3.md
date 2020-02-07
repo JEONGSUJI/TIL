@@ -85,7 +85,7 @@ DevOps의 등장으로 개발주기가 짧아지면서 배포는 더 자주 이�
 하나의 서버에 여러개의 컨테이너를 실행하면 서로 영향을 미치지 않고 독립적으로 실행되어 마치 가벼운 VM을 사용하는 느낌을 준다.
 
 - 실행중인 컨테이너에 접속하여 명령어를 입력할 수 있다.
-- `apt-get`이나 `yum`으로 패키기를 설치할 수 있다.
+- `apt-get`이나 `yum`으로 패키지를 설치할 수 있다.
 - 사용자도 추가할 수 있다.
 - 여러개의 프로세스를 백그라운드로 실행할 수 있다.
 - CPU나 메모리 사용량을 제한할 수 있다
@@ -110,7 +110,7 @@ DevOps의 등장으로 개발주기가 짧아지면서 배포는 더 자주 이�
 
 (ubuntu이미지는 ubuntu를 실행하기 위한 모든 파일을 가짐)
 
-말그대로 이미지는 컨테이너를 실행하기 위한 모든 정보를 가지고 있기 때문에 더이상 의존성 파일을 컴파일하고 이것저것 설치할 필요가 없다.
+<u>말그대로 이미지는 컨테이너를 실행하기 위한 모든 정보를 가지고 있기 때문에 더이상 의존성 파일을 컴파일하고 이것저것 설치할 필요가 없다.</u>
 
 도커 이미지는 Docker hub에 등록하거나 Docker Registry 저장소를 직접 만들어 관리할 수 있다.
 
@@ -219,6 +219,8 @@ $ docker run [OPTIONS] IMAGE[:TAG|@DIGEST] [COMMAND] [ARG...]
 
 
 
+ubuntu 이미지로 docker container 실행하기
+
 ```python
 $ docker run --rm -it ubuntu /bin/bash
 ```
@@ -246,6 +248,7 @@ $ docker run --rm -it ubuntu /bin/bash
 
 ```python
 $ docker login
+# hub.docker.com에 가입한 id/pw 입력
 $ docker run ubuntu
 ```
 
@@ -263,7 +266,7 @@ $ docker run --rm -it python:3.7-slim /bin/bash
 
 
 
-Django를 설치하고 runserver를 하면 8000번에 접속하라고 출력되지만 브라우저에서 접속해도 표시되지 않는다.
+Django를 설치하고 runserver를 하면 8000번에 접속하라고 출력되지만 브라우저에서 접속해도 표시되지 않는다. host가 가진 port와 container가 연결되지 않았기 때문이다.
 
 
 
@@ -274,11 +277,9 @@ Django를 설치하고 runserver를 하면 8000번에 접속하라고 출력되�
 -p HostPort:containerPort
 ```
 
-```python
-$ docker run --rm -it -p 8001:8000 python:3.7-slim /bin/bash
-```
 
 
+HostPort는 8001번 containerPort는 8000번을 사용하여 연결하는 코드를 작성해보자. 그리고 내부에서 django를 설치하고 startproject를 하여 runserver해보자.
 
 ```python
 $ docker run --rm -it -p 8001:8000 python:3.7-slim /bin/bash
@@ -308,7 +309,7 @@ RUN         pip install -r /tmp/requirements.txt
 
 # 소스코드 복사 후 runserver
 COPY        . /srv/instagram
-# WORKDIR이 cd의 의미이다.
+# WORKDIR는 cd의 의미이다.
 WORKDIR     /srv/instagram/app
 CMD         python manage.py runserver 0:8000
 ```
@@ -317,6 +318,8 @@ CMD         python manage.py runserver 0:8000
 
 ### docker build & run 하기
 
+build 명령으로 이미지를 생성하자. `-t`는 `--tag`옵션으로 이미지 이름과 태그를 설정할 수 있다. 이미지 이름만 설정하면 태그는 latest로 설정된다. `-f`는 dockerfile 위치 설정이다.
+
 ```python
 $ docker build -t instagram -f Dockerfile .
 $ docker run --rm -it -p 8001:8000 instagram
@@ -324,7 +327,7 @@ $ docker run --rm -it -p 8001:8000 instagram
 
 
 
-> `docker run --rm -it -p 8001:8000 instagram /bin/bash`와 `docker run --rm -it -p 8001:8000 instagram` 차이?
+> **`docker run --rm -it -p 8001:8000 instagram /bin/bash`와 `docker run --rm -it -p 8001:8000 instagram` 처럼 /bin/bash를 붙이는 것은 뭐가 다른가?**
 >
 > 뒤에 /bin/bash를 붙이면 CMD 명령 전까지 실행된다.
 
@@ -339,7 +342,7 @@ $ docker tag instagram ID/reponame:tagname
 $ docker push ID/reponame
 ```
 
-
+(ID와 reponame은 hub.docker.com ID와 reponame 의미)
 
 
 
@@ -363,7 +366,7 @@ docker설치 및 run 명령어 실행하는 부분을 `deploy-docker.sh` 안에 
 # deploy-docker.sh
 
 #!/usr/bin/env sh
-IDENTITY_FILE="$HOME/.ssh/wps12th.pem"
+IDENTITY_FILE="$HOME/.ssh/키페어명.pem"
 USER="ubuntu"
 HOST="[IPv4 퍼블릭 IP]"
 TARGET=${USER}${HOST}
@@ -413,21 +416,9 @@ ${SSH_CMD} -C "screen -r docker -X stuff 'sudo docker run --rm -it -p 80:8000 --
 
 
 
-
-
->**추가자료**
->
->[생활코딩 Docker](pyrasis.com/Docker/Docker-HOWTO#section-3)
->
->[가장 빨리 만나는 Docker](http://pyrasis.com/private/2014/11/30/publish-docker-for-the-really-impatient-book)
-
-
-
 + pycharm에서 `plugin ignore`와 `GitToolBox` 설치
 
-
-
-+ .dockerignore 파일 생성
++ `.dockerignore` 파일 생성
 
 ```
 /.git
@@ -435,3 +426,18 @@ ${SSH_CMD} -C "screen -r docker -X stuff 'sudo docker run --rm -it -p 80:8000 --
 /secrets.json
 ```
 
+
+
+image 중 none을 지우는 코드
+
+```
+docker system prune
+```
+
+
+
+>**추가자료**
+>
+>[생활코딩 Docker](pyrasis.com/Docker/Docker-HOWTO#section-3)
+>
+>[가장 빨리 만나는 Docker](http://pyrasis.com/private/2014/11/30/publish-docker-for-the-really-impatient-book)

@@ -78,4 +78,3 @@ $ poetry show --no-dev --tree
 ```python
 $ poetry export -f requirements.txt > requirements.txt
 ```
-
