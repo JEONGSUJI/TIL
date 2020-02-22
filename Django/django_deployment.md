@@ -94,7 +94,7 @@
   - 다운로드 폴더에서 wps12th.pem을 키를 놓는 위치로 이동시키자. `.`으로 시작하는 숨김폴더라서 아래와 같이 적어주어야 한다.
 
     ```
-    mv ~/Download/wps12th.pem ~/.ssh
+    mv ~/Downloads/wps12th.pem ~/.ssh
     ```
 
     - `인스턴스 보기`버튼 클릭
@@ -102,6 +102,28 @@
 
 
 ### SSH 공개키
+
+우선 SSH란 Secure Shell Protocol, 즉 네트워크 프로토콜 중 하나로 컴퓨터와 컴퓨터가 인터넷과 같인 Public Network를 통해 서로 통신을 할 때 보안적으로 안전하게 통신을 하기 위한 프로토콜이다. 대표적인 사용의 예는 데이터를 전송하거나 원격 제어할 때 사용된다.
+
+
+
+우리는 AWS를 이용할 것인데, AWS의 인스턴스 서버에 접속하여 해당 머신에 명령을 내리기 위해서도 SSH를 통한 접속을 해야한다.
+
+
+
+FTP나 Telnet과 같은 다른 컴퓨터와 통신을 위해 사용되는 프로토콜도 있는데 SSH를 사용하는 이유는 '보안'이다. FTP나 Telnet을 통해 민감한 정보를 주고 받는다면 정보를 직접 네트워크를 통해 넘기기 때문에 누구나 해당 정보를 열어볼 수 있어 보안에 상당히 취약하다. 하지만 SSH를 사용한다면 보안적으로 훨씬 안전한 채널을 구상한 뒤 정보를 교환하기 때문에 보안적인 면에서 훨씬 뛰어나다.
+
+
+
+SSH는 다른 컴퓨터와 통신을 하기 위해 접속을 할 때 우리가 일반적으로 사용하는 비밀번호의 입력을 통한 접속을 하지 않는다. 기본적으로 SSH는 한 쌍의 Key를 통해 접속하려는 컴퓨터와 인증 과정을 거치게된다. 이 한 쌍의 Key는 Private key와 Public Key이다.
+
+
+
+Public Key는 공개되어도 비교적 안전한 Key이다. Public Key를 통해 메시지를 전송하기 전 암호화를 하게 된다.
+
+
+
+---
 
 - 공개키 만들기
 
@@ -120,12 +142,12 @@
   ```
 
   `.ssh/id_rsa` 키를 저장하고 싶은 디렉토리를 입력하고 암호를 두 번 입력한다. 이때 암호를 비워두면 키를 사용할 때 암호를 묻지 않는다
-  - 이제 사용자가 자신의 공개키는 Git 서버 관리자에게 보내야한다. 사용자는 `.pub` 파일의 내용을 복사하여 이메일을 보내기만 하면 된다.
-
+- 이제 사용자가 자신의 공개키는 Git 서버 관리자에게 보내야한다. 사용자는 `.pub` 파일의 내용을 복사하여 이메일을 보내기만 하면 된다.
+  
   ```
   $ cat ~/.ssh/id_rsa.pub
   ```
-
+  
   - 위 코드를 실행하여 나온 정보를 자신의 git 계정의 settings로 이동하면, SSH and GPG keys 탭을 클릭한 후 `New SSH key`버튼을 클릭한다.
   - Title에는 이름을 설정하고, Key에는 `$ cat ~/.ssh/id_rsa.pub`코드를 실행한 뒤 나온 데이터를 넣어주고 `Add SSH key`버튼을 클릭해준다.
 
@@ -139,9 +161,9 @@
 
 - wps12th.pem 권한변경하기
 
-  ```
+```
   chmod 400 ~/.ssh/wps12th.pem
-  ```
+```
 
 
 
@@ -165,9 +187,9 @@
 
 SSH를 사용하여 인스턴스에 연결하려면 아래와 같은 코드를 입력해야 한다.
 
-```
+  ```
 $ ssh -i /path/my-key-pair.pem ec2-user@ec2-198-51-100-1.compute-1.amazonaws.com
-```
+  ```
 
 
 
@@ -421,7 +443,7 @@ ${SSH_CMD} -C 'screen -X -S runserver quit'
 ${SSH_CMD} -C 'screen -S runserver -d -m'
 
 # 실행중인 세션에 명령어 전달
-${SSH_CMD} -C "screen -r runserver -X stuff $'sudo python3 /home/ubuntu/projects/instagram/app/manage.py runserver 0:80\n'"
+${SSH_CMD} -C "screen -r runserver -X stuff 'sudo python3 /home/ubuntu/projects/instagram/app/manage.py runserver 0:80\n'"
 
 echo "배포완료!"
 ```
