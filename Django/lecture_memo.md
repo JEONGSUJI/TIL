@@ -277,3 +277,73 @@ Django가 거부하므로, SecurityGroup의 Inbound는 이미 통과한 상태
 ---
 
 [https://medium.com/harrythegreat/oh-my-zsh-iterm2%EB%A1%9C-%ED%84%B0%EB%AF%B8%EB%84%90%EC%9D%84-%EB%8D%94-%EA%B0%95%EB%A0%A5%ED%95%98%EA%B2%8C-a105f2c01bec](https://medium.com/harrythegreat/oh-my-zsh-iterm2로-터미널을-더-강력하게-a105f2c01bec)
+
+
+
+---
+
+[2/18]
+
+
+
+인스타그램
+
+url 구분
+
+localhost:8000/api/ -> apiview
+
+localhost:8000/ -> Django VIew
+
+
+
+config.urls
+
+​	api/ <- 별도의 urlpatterns 사용
+
+---
+
+Request <-HttpRequest
+
+​	FILES
+
+​	POST
+
+​	GET
+
+합쳐진게 -> .data
+
+
+
+---
+
+[2/20]
+
+Back-end 문서화
+
+Client가 보기 쉽고 고생하지 않도록 작성하는 것이 중요하다.
+
+
+
+직접 작성하는 방법과, 자동화 툴을 사용하는 방법이있다.
+
+
+
+localhost 할 때 0:8000으로  runserver
+
+
+
+별도 instagram-front 폴더 생성
+
+
+
+- jquery를 다운로드하고 jquery.js에 저장
+- html에서 불러오기
+- `python -m http.server 3001` 임시로 서버열기
+
+
+
+django-cors-headers
+
+자바스크립트가 다른 서버에 접근하는게 막혀있음 CORS에러? 때문에 위를 설치해줘야함
+
+그리고 setting에 middleware에 추가되어있어야함
