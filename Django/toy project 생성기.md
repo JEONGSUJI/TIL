@@ -1,4 +1,4 @@
-# 내가 잘 몰라서 쓰는 토이 프로젝트 생성기
+# toy project 생성기
 
 뭔가 다 배웠다는데, 뭘 배웠는지 모르겠고, 시작하려니 `mkdir toyproject`하고 멈춰있는 내 모습이 당황스러워 처음부터 복습해보기위해 기록하는 생성기입니다.
 
@@ -16,7 +16,8 @@
   - Django 세팅
   - EC2 세팅
   - DOCKER 세팅
-  - Nginx, gunicorn
+  - gunicorn
+  - Nginx
 - 모델링
 - 프로젝트 작업 순차 진행
 
@@ -396,15 +397,93 @@ $ docker run --rm -it -p 8001:8000 instagram
 
 
 
----
+#### secrets.json 생성하고 docker랑 연결하기
 
-추후 진행
+아직 hub.docker에 push하지 않았습니다.
+
+현재 우리는 toyproject 안에 settings.py에 숨겨야 할 정보를 아직 숨기지 않았기 때문입니다. 
+
+우선 Docker Image에 SECRET 값을 넣지 않기 위해 secrets.json을 루트 폴더에 만들고 settings.py에 불러오는 작업을 진행해보겠습니다.
 
 
 
-https://hub.docker.com/ 가입하고, Docker login을 진행합니다.
+루트폴더에 `secrets.json` 파일을 생성하고 아래와 같은 json 형식으로 입력해주세요.
 
-서버 접속이 된 터미널에 아래 명령어를 입력하세요.
+```json
+{
+    "SECRET_KEY" : "각자 Settings.py에 적힌 것을 입력하세요"
+}
+```
+
+
+
+settings.py에 아래 내용을 추가 및 수정해봅시다.
+
+```python
+# settings.py
+# secrets.json파일이 ROOT_DIR에 있는 경우
+
+ROOT_DIR = os.path.dirname(BASE_DIR)
+
+# secrets.json 파일을 읽어옵니다.
+import json
+secrets_path = os.path.join(ROOT_DIR, 'secrets.json')
+json_data = json.load(open(secrets_path))
+
+# 사용하고자 하는 곳에 아래와 같이 코드를 입력합니다.
+# 아래 코드는 SECERT_KEY 값에 secrets.json에 SECERT_KEY 키값을 넣음
+SECRET_KEY = json_data['SECERT_KEY']
+```
+
+
+
+toyproject 루트 폴더에`docker-run-secret.py`를 생성한 뒤 docker image에 secrets.json이 들어가지 않도록 아래 내용을 작성해봅시다.
+
+```python
+#!/usr/bin/env python
+import subprocess
+
+DOCKER_OPTIONS = [
+    ('--rm', ''),
+    ('-it', ''),
+    ('-d', ''),
+    ('-p', '8001:8000'),
+    ('--name', 'toyproject'),
+]
+DOCKER_IMAGE_TAG = 'devsuji/toyproject'
+
+subprocess.run(f'docker build -t {DOCKER_IMAGE_TAG} -f Dockerfile .', shell=True)
+subprocess.run(f'docker stop toyproject', shell=True)
+
+subprocess.run('docker run {options} {tag} /bin/bash'.format(
+    options=' '.join([
+        f'{key} {value}' for key, value in DOCKER_OPTIONS
+    ]),
+    tag=DOCKER_IMAGE_TAG,
+), shell=True)
+
+subprocess.run('docker cp secrets.json toyproject:/srv/toyproject', shell=True)
+
+subprocess.run('docker exec -it toyproject /bin/bash', shell=True)
+```
+
+- 이 파일은 docker image를 만듭니다.
+
+- 다음으로 docker 안에 secrets.json을 넣지 않고, `./docker-run-secrets.py`를 실행할 때 secrets.json을 넣어줍니다.
+
+  > 실행 전 `chmod 744 docker-run-secrets.py` 로 해당 파일을 실행할 수 있도록 만들어줘야합니다.
+
+- 그런 다음 내부에서 `./manage.py runserver 0:8000`을 해주면 `localhost:8001`에 접근 시 정상적으로 출력된다. (`0:8000`에서 0은 모든 곳에서 연결할 수 있도록 해주는 것이다.)
+
+
+
+#### docker login 하기
+
+https://hub.docker.com/ 가입하고, create repository를 합니다.
+
+Docker login을 진행합니다.
+
+docker image를 만든 project 터미널에 아래 명령어를 입력하세요.
 
 ```python
 $ docker login
@@ -414,54 +493,141 @@ $ docker login
 
 
 
-우선 DOCKER IMAGE에 SECRET 값을 넣지 않기 위해 secrets.json을 루트 폴더에 만들고 settings.py에 불러오는 작업을 진행해보겠습니다.
+#### docker hub에 push하기
 
-
-
-secrets.json 파일을 생성하고 아래와 같은 json 형식으로 입력해주세요.
-
-```json
-{
-    "abc" : "abc"
-}
-```
-
-
-
-settings.py에서 해당 값을 읽어 봅시다.
+https://hub.docker.com/ 에 create repository 후 터미널에서 아래 명령어를 입력하세요.
 
 ```python
-# settings.py
-# secrets.json파일이 ROOT_DIR에 있는 경우
-
-ROOT_DIR = os.path.dirname(BASE_DIR)
-
-import json
-secrets_path = os.path.join(ROOT_DIR, 'secrets.json')
-json_data = json.load(open(secrets_path))
-
-# 사용하고자 하는 곳에
-sample = json_data['json에 입력한 key값']
-```
-
-
-
-### docker hub에 push하기
-
-https://hub.docker.com/ 에 create repository를 한 뒤
-
-```python
-$ docker tag instagram ID/reponame:tagname
 $ docker push ID/reponame
 ```
 
 (ID와 reponame은 hub.docker.com ID와 reponame 의미)
 
+push가 완료되면 hub.docker.com의 해당 repository에 Tags가 업데이트 되었다는 것을 확인할 수 있습니다.
 
 
-nginx할 때 dockerfile 추가
+
+#### docker pull하기
+
+이제 서버가 접속되어있는 터미널로 가서 해당 이미지를 pull 해옵시다.
+
+```python
+$ docker pull [OPTIONS] NAME[:TAG|@DIGEST]
+```
+
+pull이 완료되면 `docker images` 명령어를 통해 확인할 수 있습니다.
+
+
+
+### gunicorn 적용하기
+
+[현재 세팅되어 있는 형태]
 
 ```
+EC2 - Container(80:8000) - (screen)runserver - Django
+```
+
+`EC2 - Container(80:80)`는 HTTP요청입니다. 실제 데이터보다 상대방 컴퓨터까지 가기 위한 데이터가 더 큽니다. `Django(web application)`는 외부에서 오는 요청에 대한 동적 응답을 생성합니다.
+
+
+
+[바꾸려는 형태]
+
+runserver는 성능이 안좋기 때문에 gunicorn으로 변경하고자 합니다.
+
+```
+EC2 - Container(80:8000) - gunicorn:8000 - Django
+```
+
+
+
+#### gunicorn은?
+
+웹서버로 전달된 요청을 파이썬 애플리케이션에게 적절히 번역해서 전달하고, 반대로 파이썬 애플리케이션의 응답을 적절히 웹 서버에게 번역해서 전달합니다.
+
+
+
+#### gunicorn 설치하기
+
+toyproject 폴더에 아래 명령어를 실행해 gunicorn을 설치해보자.
+
+```python
+$ poetry add gunicorn
+```
+
+
+
+> (생략)필요한 package들을 poetry add로 설치한다.
+>
+> ```
+> $ poetry add 'django<3' boto3 django-extensions django-secrets-manager django-storages Pillow psycopg2-binary requests
+> ```
+>
+> notebook은 --dev 옵션을 주어 추가한다.
+>
+> ```
+> $ poetry add notebook --dev
+> ```
+
+
+
+#### gunicorn file 생성하기
+
+toyproject 루트 폴더에 `.config` 디렉터리를 생성한 뒤 `gunicorn.py`를 생성 한 뒤 아래 내용을 적어줍시다.
+
+```python
+daemon = False
+cmdir = '/src/toyproject/app'
+bind = 'unix:/run/toyproject.sock'
+accesslog = '/var/log/gunicorn/toyproject-access.log'
+errorlog = '/var/log/gunicorn/toyproject-error.log'
+capture_output = True
+```
+
+
+
+#### gunicorn 사용하기
+
+runserver의 동작을 gunicorn이 할 수 있습니다. toyproject/app 위치로 터미널을 이동한 후 아래 코드를 실행해봅시다.
+
+```python
+$ gunicorn -b 0:8000 config.wsgi
+```
+
+출력되는 Listening at: http://0.0.0.0:8000 클릭 시 잘 작동됨을 브라우저에서 확인할 수 있습니다. 
+
+
+
+#### gunicorn과 nginx 연결하기
+
+toyproject 루트 폴더에 `.config` 디렉터리에 `toyproject.nginx` 파일을 생성합시다.
+
+```nginx
+server {
+    # 80번 포트로 온 요청에 응답할 Block임
+    listen 80;
+
+    # HTTP요청의 Host 값 (URL에 입력한 도메인)
+    server_name localhost;
+
+    # 인코딩 utf-8설정
+    charset utf-8;
+
+    # root로부터의 요청에 대해 응답할 Block
+    location / {
+        # /run/gunicorn.sock 파일을 사용해서 Gunicorn과 소켓 통신하는 Proxy 구성
+        proxy_pass      http://unix:/run/toyproject.sock;
+    }
+}
+```
+
+> proxy_pass가 gunicorn이랑 연결하는 역할을 할 것 입니다.
+
+
+
+이 파일을 nginx 폴더에 넘겨줘야 하기에 dockerfile을 수정해봅시다.
+
+```dockerfile
 # python:3.7-slim에 사용하는걸 모두 쓰겠다.
 FROM        python:3.7-slim
 # RUN 마다 컨테이너 하나가 생긴다.
@@ -474,24 +640,76 @@ COPY        ./requirements.txt /tmp/
 RUN         pip install -r /tmp/requirements.txt
 
 # 소스코드 복사 후 runserver
-COPY        . /srv/instagram
-WORKDIR     /srv/instagram/app
+COPY        . /srv/toyproject
+WORKDIR     /srv/toyproject/app
 
 # nginx 설정파일 복사
-RUN         rm /etc/nginx/sites-enabled/default
-RUN         cp /srv/instagram/.config/instagram.nginx /etc/nginx/sites-enabled/
+RUN         cp /srv/toyproject/.config/toyproject.nginx /etc/nginx/sites-enabled/
 
-# 로그폴더 생성
-RUN     mkdir /var/log/gunicorn
+CMD         python manage.py runserver 0:8000
+```
 
-# collectstatic
-#RUN         python manage.py collectstatic --noinput
+> sites-enabled: nginx 설정 적는 폴더
 
-#CMD         python manage.py runserver 0:8000
-CMD         /bin/bash
+
+
+
+
+아래 코드를 실행해 확인해봅시다.
+
+```
+$ ./deploy-run-secrets.py
+
+$ cd /etc/nginx/sites-enabled/
+$ ls
+# default  toyproject.nginx
 ```
 
 
+
+```
+# secrets이 들어간 container를 연다
+$ ./docker-run-secrets.py
+
+# 새로운 터미널 창을 열어서 실행중인 container list 확인
+# ps는 container list를 의미한다
+$ docker ps
+
+$ docker exec -it toyproject /bin/bash
+# 내부에서 nginx / nginx -g 'daemon off;' 실행한다.
+```
+
+`localhost:8001`로 접속 시 화면이 정상 출력됨
+
+
+
+```
+gunicorn -b unix:/run/toyproject.sock config.wsgi 
+```
+
+
+
+---
+
+추후 진행
+
+gunicorn과 nginx를 치지 말고 자동으로 되게 하자.
+
+supervisiord를 이용하면 여러개의 프로세스를 한번에 붙잡아 놓고 실행할 수 있다.
+
+toyproject 루트 폴더에 `.config` 디렉터리에 `supervisord.conf` 파일을 생성합시다.
+
+```conf
+[supervisord]
+logfile=/var/log/supervisor.log
+user=root
+
+[program:nginx]
+command=nginx -g "daemon off;"
+
+[program:gunicorn]
+command=gunicorn -c /srv/instagram/.config/gunicorn.py config.wsgi
+```
 
 
 
@@ -506,3 +724,8 @@ $ ./manage.py createsuperuser
 
 
 애플리케이션 생성
+
+```
+$ ./manage.py startapp member
+```
+
