@@ -1,4 +1,4 @@
-# Nginx - gunicorn setting
+## Nginx - gunicorn setting
 
 단계 단계를 밟아나가보자. 우선 gunicorn까지 세팅해본 뒤 문제가 없으면 Nginx를 세팅해보자.
 
@@ -30,7 +30,7 @@ EC2 - Container(80:8000) - gunicorn:8000 - Django
 
 - WSGI, 웹서버가 가져온 요청을 번역하는 역할을 한다.
 - runserver 역할을 할 수 있음
-- 외부 input 하나만 처리
+- 외부 input 하나만 처리이 파일은 docker image를 만들다. 다음으로 docker 안에 secrets.json을 넣지 않고, `./docker-run-secrets.py`를 실행할 때 secrets.json을 넣어준다.
 
 웹서버로 전달된 요청을 파이썬 애플리케이션에게 적절히 번역해서 전달 -> 파이썬 애플리케이션의 응답을 적절히 웹 서버에게 번역해서 전달 (gunicorn은 웹서버 역할도 탑재)
 
@@ -129,7 +129,7 @@ echo "docker build"
 poetry export -f requirements.txt > requirements.txt
 ```
 
-[poetyr 공식문서](https://python-poetry.org/docs/cli/#export)
+[poetry 공식문서](https://python-poetry.org/docs/cli/#export)
 
 
 
@@ -277,7 +277,7 @@ subprocess.run('docker run {options} devsuji/wps-instagram'.format(
 
 
 
-- `docker-run-secrets.py` docker image에 secerts.json이 들어가지 않도록 코드 수정하기
+- `docker-run-secrets.py` docker image에 secrets.json이 들어가지 않도록 코드 수정하기
 
 ```python
 #!/usr/bin/env python
@@ -307,7 +307,7 @@ subprocess.run('docker cp secrets.json instagram:/srv/instagram', shell=True)
 subprocess.run('docker exec -it instagram /bin/bash', shell=True)
 ```
 
-이 파일은 docker image를 만들다. 다음으로 docker 안에 secrets.json을 넣지 않고, `./docker-run-secrets.py`를 실행할 때 secrets.json을 넣어준다.
+이 파일은 docker image를 만든다. 다음으로 docker 안에 secrets.json을 넣지 않고, `./docker-run-secrets.py`를 실행할 때 secrets.json을 넣어준다.
 
 그런 다음 내부에서 `./manage.py runserver 0:8000`을 해주면 `localhost:8001`에 접근 시 정상적으로 출력된다. (`0:8000`에서 0은 모든 곳에서 연결할 수 있도록 해주는 것이다.)
 
