@@ -385,7 +385,7 @@ ${SSH_CMD} -C 'sudo apt -y install docker.io'
 
 # pip freeze
 echo "pip freeze"
-"$HOME"/.pyenv/versions/3.7.5/envs/wps-instagram/bin/pip freeae > "${ORIGIN_SOURCE}"requirments.txt
+"$HOME"/.pyenv/versions/3.7.5/envs/wps-instagram/bin/pip freeze > "${ORIGIN_SOURCE}"requirments.txt
 
 # docker build
 echo "docker build"
@@ -433,6 +433,14 @@ image 중 none을 지우는 코드
 ```
 docker system prune
 ```
+
+docker image를 지우는 코드
+
+```
+docker rmi [REPOSITORY]
+```
+
+
 
 
 

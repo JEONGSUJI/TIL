@@ -436,9 +436,166 @@ apis/viewsets.py 추가하기
 
 ```python
 # apis/viewsets.py
+
+from rest_framework import viewsets
+
+from ..models import Snippet
+from --serializers import SnippetSerializer
+
+class SnippetViewSet(viewsets.ModelViewSet):
+    queryset = Snippet.objects.all()
+    serializer_class = SnippetSerializer    
 ```
 
 
 
-28
+이제 이 코드가 urls.py에서 동작할 수 있도록 수정해보자
 
+```python
+# snippets/urls.py
+
+from django.urls import path
+
+from .apis import viewsets
+
+app_name = 'snippets'
+urlpatterns = [
+    path('snippets/', viewsets.SnippetListCreateAPIView.as_view()),
+    path('snippets/<int:pk>/', viewsets.SnippetRetrieveUpdateDestroyAPIView.as_view()),
+]
+```
+
+
+
+include() 함수를 사용하여 아래와 같이 api-view 접두어를 붙이도록 설정해보자.
+
+`localhost:8000/api-view/snippets/`
+
+`localhost:8000/api-view/snippets/1/`
+
+별도의 urlpatterns를 갖고있음, 리스트 변수가 필요하다.
+
+
+
+```python
+# snippets/urls.py
+
+from django.urls import path, include
+
+from .apis import generic, viewset
+
+app_name = 'snippets'
+
+urlpatterns_api_view = [
+    path('snippets/', generic.SnippetListCreateAPIView.as_view(
+        'get':'list',
+        'post':'create',
+    )),
+    path('snippets/<int:pk>/', generic.SnippetRetrieveUpdateDestroyAPIView.as_view(
+    	'get':'retrieve',
+        'patch':'partial_update',
+        'delete':'destroy',
+    )),
+]
+
+urlpatterns_viewset = [
+    path('snippets/', viewsets.SnippetViewSet.as_view()),
+    path('snippets/<int:pk>', viewsets.SnippetViewSet.as_view()),
+]
+
+urlpatterns = [
+    path('api-view/', include(urlpatterns_api_view)),
+    path('viewset/', include(urlpatterns_viewset)),
+]
+```
+
+
+
+viewset을 사용하여 queryset, serializer_class 중복을 없애주었는데
+
+url에서는 as_view에 get, post, patch, delete에 대한 설정을 더 추가해줘서 조금 거추장스러워졌다.
+
+이렇게 해줘야하는 이유는 viewset을 살펴보면 viewset이 ModelViewSet을 상속받는데, 살펴보면 5개의 ModelMixin이 있다.
+
+
+
+이제 필수 코드만 남았는데, 반면 urls.py에는 url 주소정보만 약간 다를 뿐 중복된다.
+
+그래서 이 코드마저 중복을 최소화하기 위해 나온것이 router 기능이다.
+
+
+
+Using Router를 하기위해 urls.py에 아래 코드를 추가한다.
+
+```python
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register(r'snippets', viewsets.SnippetViewSet)
+
+urlpatterns = [
+	path('router/', include(router.urls))    
+]
+```
+
+
+
+추가가 되어 완성된 코드는 다음과 같다.
+
+```python
+# snippets/urls.py
+
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+
+from .apis import generic, viewset
+
+app_name = 'snippets'
+
+router = DefaultRouter()
+router.register(r'snippets', viewsets.SnippetViewSet)
+# 만약 posts로 url을 만들고자 한다면 아래 코드만 추가해주면 된다.
+# router.register(r'posts', viewsets.PostViewSet)
+
+# router.urls는 아래 urlpatterns_viewset의 모든 내용이 들어있다.
+urlpatterns_api_view = [
+    path('snippets/', generic.SnippetListCreateAPIView.as_view(
+        'get':'list',
+        'post':'create',
+    )),
+    path('snippets/<int:pk>/', generic.SnippetRetrieveUpdateDestroyAPIView.as_view(
+    	'get':'retrieve',
+        'patch':'partial_update',
+        'delete':'destroy',
+    )),
+]
+
+urlpatterns_viewset = [
+    path('snippets/', viewsets.SnippetViewSet.as_view()),
+    path('snippets/<int:pk>', viewsets.SnippetViewSet.as_view()),
+]
+
+urlpatterns = [
+    path('api-view/', include(urlpatterns_api_view)),
+    path('viewset/', include(urlpatterns_viewset)),
+    path('router/', include(router.urls)),
+]
+```
+
+
+
+그래서 지금 POSTMAN으로 `http://localhost:8000/router/snippets/`로 접속하면 정상적으로 데이터가 출력되는 것을 확인할 수 있다.
+
+
+
+router.urls는 아래 urlpatterns_viewset의 모든 내용이 들어있다.
+
+
+
+결론적으로 아래로 갈 수록 추상화된 코드이다.
+
+- APIView
+- mixins + GenericAPIView 
+- Generic Class-based APIView
+- Viewset
+  - Router(url patterns의 추상화)
