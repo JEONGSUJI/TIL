@@ -452,6 +452,7 @@ DOCKER_OPTIONS = [
 ]
 DOCKER_IMAGE_TAG = 'devsuji/toyproject'
 
+subprocess.run('poetry export -f requirements.txt > requirements.txt', shell=True)
 subprocess.run(f'docker build -t {DOCKER_IMAGE_TAG} -f Dockerfile .', shell=True)
 subprocess.run(f'docker stop toyproject', shell=True)
 
@@ -549,7 +550,7 @@ EC2 - Container(80:8000) - gunicorn:8000 - Django
 
 #### gunicorn 설치하기
 
-toyproject 폴더에 아래 명령어를 실행해 gunicorn을 설치해보자.
+toyproject 폴더에 아래 명령어를 실행해 gunicorn을 설치합니다.
 
 ```python
 $ poetry add gunicorn
@@ -557,13 +558,13 @@ $ poetry add gunicorn
 
 
 
-> (생략)필요한 package들을 poetry add로 설치한다.
+> (생략)필요한 package들을 poetry add로 설치합니다.
 >
 > ```
 > $ poetry add 'django<3' boto3 django-extensions django-secrets-manager django-storages Pillow psycopg2-binary requests
 > ```
 >
-> notebook은 --dev 옵션을 주어 추가한다.
+> notebook은 --dev 옵션을 주어 추가합니다.
 >
 > ```
 > $ poetry add notebook --dev
@@ -653,8 +654,6 @@ CMD         python manage.py runserver 0:8000
 
 
 
-
-
 아래 코드를 실행해 확인해봅시다.
 
 ```
@@ -679,25 +678,236 @@ $ docker exec -it toyproject /bin/bash
 # 내부에서 nginx / nginx -g 'daemon off;' 실행한다.
 ```
 
-`localhost:8001`로 접속 시 화면이 정상 출력됨
+> - `nginx` : 백그라운드 모드로 실행됩니다.
+>
+> - `nginx -g 'daemon off;'` : Nginx를 Foreground모드로 실행
 
 
+
+아래 순서로 실행해봅시다.
+
+- `./docker-run-secrets.py`를 실행
+
+- 내부에서 `nginx`를 입력합니다.
+
+- `localhost:8001`로 접속 시 502 Bad Gateway가 출력됩니다.
+
+  이는 nginx가 연결되었다는 것입니다. 이제 gunicorn을 연결해봅시다.
+
+- `gunicorn -b unix:/run/toyproject.sock config.wsgi `를 입력합니다.
+
+- `localhost:8001`로 접속 시 이제 우주선을 볼 수 있습니다.
+
+
+
+자, 여기까지는 로컬에서의 작업입니다. 이제 서버에서도 실행될 수 있도록 파일을 새로 작성해보겠습니다.
+
+
+
+#### 서버에서 gunicorn과 nginx가 작동하도록 하기
+
+toyproject 폴더에 `deploy-docker-secrets.py`를 생성 후 아래 코드를 작성합니다.
+
+```python
+#!/usr/bin/env python
+
+# 1. Host에서 이미지 build, push
+# 2. EC2에서 이미지 pull, run(bash)
+# 3. Host -> EC2 -> Container로 secrets.json전송
+# 4. Container에서 runserver
+import os
+import subprocess
+from pathlib import Path
+
+DOCKER_IMAGE_TAG = 'devsuji/toyproject'
+DOCKER_OPTIONS = [
+    ('--rm', ''),
+    ('-it', ''),
+    # background로 실행하는 옵션 추가
+    ('-d', ''),
+    ('-p', '80:80'),
+    ('-p', '443:443'),
+    ('--name', 'toyproject'),
+
+    # Let's Encrypt volume
+    ('-v', '/etc/letsencrypt:/etc/letsencrypt'),
+]
+USER = 'ubuntu'
+HOST = '13.124.94.217'
+TARGET = f'{USER}@{HOST}'
+HOME = str(Path.home())
+IDENTITY_FILE = os.path.join(HOME, '.ssh', 'project.pem')
+SOURCE = os.path.join(HOME, 'projects', 'wps12th', 'toyproject')
+SECRETS_FILE = os.path.join(SOURCE, 'secrets.json')
+
+
+def run(cmd, ignore_error=False):
+    process = subprocess.run(cmd, shell=True)
+    if not ignore_error:
+        process.check_returncode()
+
+
+def ssh_run(cmd, ignore_error=False):
+    run(f"ssh -o StrictHostKeyChecking=no -i {IDENTITY_FILE} {TARGET} -C {cmd}", ignore_error=ignore_error)
+
+
+# 1. 호스트에서 도커 이미지 build, push
+def local_build_push():
+    run(f'poetry export -f requirements.txt > requirements.txt')
+    run(f'docker build -t {DOCKER_IMAGE_TAG} .')
+    run(f'docker push {DOCKER_IMAGE_TAG}')
+
+
+# 서버 초기설정
+def server_init():
+    ssh_run(f'sudo apt update')
+    ssh_run(f'sudo DEBIAN_FRONTEND=noninteractive apt dist-upgrade -y')
+    ssh_run(f'sudo apt -y install docker.io')
+
+
+# 2. 실행중인 컨테이너 종료, pull, run
+def server_pull_run():
+    ssh_run(f'sudo docker stop toyproject', ignore_error=True)
+    ssh_run(f'sudo docker pull {DOCKER_IMAGE_TAG}')
+    ssh_run('sudo docker run {options} {tag} /bin/bash'.format(
+        options=' '.join([
+            f'{key} {value}' for key, value in DOCKER_OPTIONS
+        ]),
+        tag=DOCKER_IMAGE_TAG,
+    ))
+
+
+# 3. Host에서 EC2로 secrets.json을 전송, EC2에서 Container로 다시 전송
+def copy_secrets():
+    run(f'scp -i {IDENTITY_FILE} {SECRETS_FILE} {TARGET}:/tmp', ignore_error=True)
+    ssh_run(f'sudo docker cp /tmp/secrets.json toyproject:/srv/toyproject')
+
+
+# # 4. Container에서 runserver실행
+# def server_runserver():
+#     ssh_run(f'sudo docker exec -it -d instagram '
+#             f'python /srv/instagram/app/manage.py runserver 0:8000')
+
+# 4. Container에서 collectstatic, supervisor실행
+def server_cmd():
+    ssh_run(f'sudo docker exec toyproject /usr/sbin/nginx -s stop', ignore_error=True)
+    ssh_run(f'sudo docker exec toyproject python manage.py collectstatic --noinput')
+    ssh_run(f'sudo docker exec -it -d toyproject '
+            f'supervisord -c /srv/toyproject/.config/supervisord.conf -n')
+
+# 5. server run
+def server_run():
+     ssh_run(f'sudo docker exec -it toyproject python3 manage.py collectstatic --noinput')
+     ssh_run('sudo docker run {options} {tag} /bin/bash'.format(
+        options=' '.join([
+            f'{key} {value}' for key, value in DOCKER_OPTIONS
+        ]),
+        tag=DOCKER_IMAGE_TAG,
+    ))
+
+
+if __name__ == '__main__':
+    try:
+        local_build_push()
+        server_init()
+        server_pull_run()
+        copy_secrets()
+        server_cmd()
+        # server_runserver()
+    except subprocess.CalledProcessError as e:
+        print('deploy-docker-secrets Error!')
+        print(' cmd:', e.cmd)
+        print(' returncode:', e.returncode)
+        print(' output:', e.output)
+        print(' stdout:', e.stdout)
+        print(' stderr:', e.stderr)
+```
+
+
+
+이제 실행하기 위해 파일의 권한을 바꾸고 실행해봅시다.
+
+```python
+$ chmod 744 deploy-docker-secrets.py
+$ ./deploy-docker-secrets.py
+```
+
+
+
+`Dockerfile` 수정
+
+```dockerfile
+# python:3.7-slim에 사용하는걸 모두 쓰겠다.
+FROM        python:3.7-slim
+# RUN 마다 컨테이너 하나가 생긴다.
+RUN         apt -y update && apt -y dist-upgrade && apt -y autoremove
+RUN         apt -y install nginx
+
+# requirements를 /tmp에 복사 후, pip install실행
+# 2. poetry export로 생성된 requirements.txt를 적절히 복사
+COPY        ./requirements.txt /tmp/
+RUN         pip install -r /tmp/requirements.txt
+
+# 소스코드 복사 후 runserver
+COPY        . /srv/toyproject
+WORKDIR     /srv/toyproject/app
+
+# nginx 설정파일 복사
+RUN         rm /etc/nginx/sites-enabled/default
+RUN         cp /srv/toyproject/.config/toyproject.nginx /etc/nginx/sites-enabled/
+
+# 로그폴더 생성
+RUN     mkdir /var/log/gunicorn
+
+#CMD         python manage.py runserver 0:8000
+
+CMD         /bin/bash
+```
+
+
+
+`instagram.nginx` 수정
+
+```nginx
+server_name default_name;
+```
+
+
+
+project폴더에서 아래 코드 실행
 
 ```
-gunicorn -b unix:/run/toyproject.sock config.wsgi 
+./deploy-docker-secrets.py
 ```
 
 
 
----
+서버에서 아래 코드 실행
 
-추후 진행
+```python
+$ sudo docker exec -it toyproject /bin/bash
+# 내부에서 아래코드 수행
+$ nginx
+$ gunicorn -b unix:run/toyproject.sock config.wsgi
+```
 
-gunicorn과 nginx를 치지 말고 자동으로 되게 하자.
+하면 ip주소로 접속 시 실행됩니다.
 
-supervisiord를 이용하면 여러개의 프로세스를 한번에 붙잡아 놓고 실행할 수 있다.
 
-toyproject 루트 폴더에 `.config` 디렉터리에 `supervisord.conf` 파일을 생성합시다.
+
+#### supervisiord 설치
+
+supervisiord를 이용하면 여러개의 프로세스를 한번에 붙잡아 놓고 실행할 수 있습니다.
+
+```python
+$ poetry add supervisord
+```
+
+
+
+#### supervisord 폴더 추가
+
+supervisiord를 이용하면 여러개의 프로세스를 한번에 붙잡아 놓고 실행할 수 있습니다. toyproject 루트 폴더에 `.config` 디렉터리에 `supervisord.conf` 파일을 생성합시다.
 
 ```conf
 [supervisord]
@@ -713,19 +923,355 @@ command=gunicorn -c /srv/instagram/.config/gunicorn.py config.wsgi
 
 
 
-슈퍼유저 생성 
+### 도메인 연결하기
 
-이제 로그인을 위해 슈퍼 유저 계정을 생성해보겠습니다. 
+
+
+#### HTTPS SSL 설치하기
+
+[우리가 해야할 일]
+
+- let's encrypt에서 인증서 발급 받기
+- 인증서와 공개키, 개인키를 Nginx가 사용하도록 설정
+- 인증서 자동 갱신되도록 체제 갖추기
+
+(AWS ACM을 사용하면 위 우리가 해야할 일을 모두 해결할 수 있다. 하지만 AWS ACM을 사용하지 않고 해보자.)
+
+
+
+let's encrypt를 이용해 https에 필요한 인증서를 발급 받아봅시다.
+
+let's encrypt는 인증서 발급 기관입니다. certbot 프로그램을 이용하면 쉽게 발급 가능하지만 용량이 큽니다.
+
+
+
+#### 도메인 구입하기
+
+저는 hosting.kr에서 도메인을 구입했습니다.
+
+
+
+아래 절차로 진행하시면 됩니다.
+
+- 회원가입 후 구매할 도메인을 검색하여 구매를 진행 (도메인 개인정보보호 서비스도 신청하는 것이 좋음)
+
+- 구매가 완료되면 `나의 서비스 > 도메인 관리`에 들어가서 `네임서버 주소변경`을 체크하고 신청하기 버튼을 클릭
+- 연결할 IP주소를 입력하고 `적용하기`를 클릭
+
+
+
+이제 해당 ip로 접속합니다.
+
+```python
+$ ssh -i ~/.ssh/project.pem ubuntu@[IPv4 퍼블릭 IP]
+```
+
+
+
+내부에서 아래 코드를 입력합니다.
+
+```python
+$ sudo docker run --rm -it --name certbot -v '/etc/letsencrypt:/etc/letsencrypt' -v '/var/lib/letsencrypt:/var/lib/letsencrypt' certbot/certbot certonly -d 'rarlaj.com,www.rarlaj.com' --manual
+```
+
+이메일 입력(도메인 기한 다되면 연락받을 이메일을 물어봄) > A > N > Y (도메인의 소유주를 입증하겠는지 물어봄)
+
+
+
+위 코드를 입력했다면 아래와 같이 데이터가 출력됩니다.
 
 ```
-$ ./manage.py createsuperuser
+Create a file containing just this data:
+
+LPfxSGJHNPPq0BPTeGIFXPvBtOKye28ZgjRamiorj6I.huCS1h54W6cs1JM57stOXCpEMWyrdBw6AN_8uYSvxMI
+
+And make it available on your web server at this URL:
+
+http://rarlaj.com/.well-known/acme-challenge/LPfxSGJHNPPq0BPTeGIFXPvBtOKye28ZgjRamiorj6I
+```
+
+- instagram에 `.cert` 폴더를 만들고 `./well-known/acme-challenge/` 뒤에 나오는 영어들을 파일명으로 만듭니다, 확장자는 txt로 합니다. 
+- 해당 파일에 `LPfxSGJHNPPq0BPTeGIFXPvBtOKye28ZgjRamiorj6I.huCS1h54W6cs1JM57stOXCpEMWyrdBw6AN_8uYSvxMI` 내용을 넣어주고 저장합니다.
+
+
+
+지금 내 경우에는 `rarlaj.com`과 `www.rarlaj.com`을 둘 다 등록해놓기로 해놨기 때문에 enter를 입력하면 똑같은 구문이 한번 더 나옵니다. 그 경우에도 위에서처럼 폴더를 만들어주면 됩니다.
+
+enter를 누르라는 메세지가 나오는데 아래 과정을 더 수행해야하니 이후 작업부터는 새로운 터미널을 열어 작업해야합니다.
+
+
+
+`instagram.nginx`로 가서 아래와 같이 수정해줍니다.
+
+```python
+server {
+    # 80번 포트로 온 요청에 응답할 Block임
+    listen 80;
+
+    # HTTP요청의 Host 값 (URL에 입력한 도메인)
+    server_name rarlaj.com www.rarlaj.com;
+
+    # 인코딩 utf-8설정
+    charset utf-8;
+
+    # root로부터의 요청에 대해 응답할 Block
+    location / {
+        # /run/gunicorn.sock 파일을 사용해서 Gunicorn과 소켓 통신하는 Proxy 구성
+        proxy_pass      http://unix:/run/instagram.sock;
+    }
+
+    # http://localhost/static
+    location /static/ {
+        alias           /srv/instagram/.static/;
+    }
+
+    location /.well-known/acme-challenge/ {
+        alias           /srv/instagram/.cert/;
+    }
+}
+```
+
+> *alias* 는 특정 URL이 서빙할 파일 경로를 변경하는 역할을 합니다.
+
+
+
+- ./docker-run-secrets.py 실행하기
+
+```python
+$ ./docker-run-secrets.py
 ```
 
 
 
-애플리케이션 생성
+- 위에 나왔던 데이터에 `localhost:8001/.well-known/acme-challenge/LPfxSGJHNPPq0BPTeGIFXPvBtOKye28ZgjRamiorj6I`로 접근해서 파일이 다운로드 되는지 확인하기
+
+
+
+- 재배포하기
+
+````
+./deploy-docker-secrets.py
+````
+
+
+
+이제 다시 데이터가 출력된 터미널로 돌아가 enter를 입력합시다. 완료되었다는 메세지가 뜨면 자신이 설정한 도메인 주소에 접속하면 정상적으로 출력되어야 합니다. (rarlaj.com / www.rarlaj.com) 
+
+
+
+- key가 잘 전달 되었는지 확인하기 위한 작업을 아래 코드를 실행해 진행해봅시다.
+
+```python
+$ sudo su
+$ cd /etc/letsencrypt/live/도메인주소/
+$ ls -al
+# README  cert.pem  chain.pem  fullchain.pem  privkey.pem
+```
+
+
+
+- nginx 설정에 넣어줍니다.
+
+```nginx
+server {
+    listen 80;
+    server_name rarlaj.com www.rarlaj.com;
+    charset utf-8;
+
+    location /.well-known/acme-challenge/ {
+        alias           /srv/instagram/.cert/;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+server{
+    listen 443 ssl;
+    server_name rarlaj.com www.rarlaj.com;
+    charset utf-8;
+
+    location / {
+        proxy_pass      http://unix:/run/instagram.sock;
+    }
+    location /static/ {
+        alias           /srv/instagram/.static/;
+    }
+}
+```
+
+
+
+Host(EC2)에 현재 SECURITY GROUP은 80(HTTP)과 22(SSH)만 되어있는데, 443(HTTPS) 포트도 추가해줘야 합니다.
+
+현재 설정되어 있는 상태로는 CONTAINER는 80번 포트가 열려있고 80번 포트로 접근 시 HOST로 갔다가 컨테이너 안까지 갑니다. 22번 포트로 접근 시 HOST까지만 접근했었습니다.
+
+nginx에서 우리는 80, 443 블럭을 나눠 요청을 분리했습니다. 80번 포트로 요청이 오면 gunicorn(socket) 443로 전달되고 연결될 경우 연결합니다. (도메인에 대해 80번으로 요청함 -> HTTPS로 RETURN 443으로 접근)
+
+
+
+현재 인증서가 etc/letscrypto/live/domain에 있기 때문에 --volume으로 전달해 사용할 수 있도록 합니다.
+
+
+
+- deploy-docker-secerts에 추가 (최종 코드)
+
+```sh
+#!/usr/bin/env python
+
+# 1. Host에서 이미지 build, push
+# 2. EC2에서 이미지 pull, run(bash)
+# 3. Host -> EC2 -> Container로 secrets.json전송
+# 4. Container에서 runserver
+import os
+import subprocess
+from pathlib import Path
+
+DOCKER_IMAGE_TAG = 'devsuji/wps-instagram'
+DOCKER_OPTIONS = [
+    ('--rm', ''),
+    ('-it', ''),
+    # background로 실행하는 옵션 추가
+    ('-d', ''),
+    ('-p', '80:80'),
+    ('-p', '443:443'),
+    ('--name', 'instagram'),
+
+    # Let's Encrypt volume
+    ('-v', '/etc/letsencrypt:/etc/letsencrypt'),
+]
+USER = 'ubuntu'
+HOST = '13.125.12.122'
+TARGET = f'{USER}@{HOST}'
+HOME = str(Path.home())
+IDENTITY_FILE = os.path.join(HOME, '.ssh', 'wps12th.pem')
+SOURCE = os.path.join(HOME, 'projects', 'wps12th', 'instagram')
+SECRETS_FILE = os.path.join(SOURCE, 'secrets.json')
+
+
+def run(cmd, ignore_error=False):
+    process = subprocess.run(cmd, shell=True)
+    if not ignore_error:
+        process.check_returncode()
+
+
+def ssh_run(cmd, ignore_error=False):
+    run(f"ssh -o StrictHostKeyChecking=no -i {IDENTITY_FILE} {TARGET} -C {cmd}", ignore_error=ignore_error)
+
+
+# 1. 호스트에서 도커 이미지 build, push
+def local_build_push():
+    run(f'poetry export -f requirements.txt > requirements.txt')
+    run(f'docker build -t {DOCKER_IMAGE_TAG} .')
+    run(f'docker push {DOCKER_IMAGE_TAG}')
+
+
+# 서버 초기설정
+def server_init():
+    ssh_run(f'sudo apt update')
+    ssh_run(f'sudo DEBIAN_FRONTEND=noninteractive apt dist-upgrade -y')
+    ssh_run(f'sudo apt -y install docker.io')
+
+
+# 2. 실행중인 컨테이너 종료, pull, run
+def server_pull_run():
+    ssh_run(f'sudo docker stop instagram', ignore_error=True)
+    ssh_run(f'sudo docker pull {DOCKER_IMAGE_TAG}')
+    ssh_run('sudo docker run {options} {tag} /bin/bash'.format(
+        options=' '.join([
+            f'{key} {value}' for key, value in DOCKER_OPTIONS
+        ]),
+        tag=DOCKER_IMAGE_TAG,
+    ))
+
+
+# 3. Host에서 EC2로 secrets.json을 전송, EC2에서 Container로 다시 전송
+def copy_secrets():
+    run(f'scp -i {IDENTITY_FILE} {SECRETS_FILE} {TARGET}:/tmp', ignore_error=True)
+    ssh_run(f'sudo docker cp /tmp/secrets.json instagram:/srv/instagram')
+
+
+# Container에서 runserver실행
+# def server_runserver():
+#     ssh_run(f'sudo docker exec -it -d instagram '
+#             f'python /srv/instagram/app/manage.py runserver 0:8000')
+
+# 4. Container에서 collectstatic, supervisor실행
+def server_cmd():
+    ssh_run(f'sudo docker exec instagram /usr/sbin/nginx -s stop', ignore_error=True)
+    ssh_run(f'sudo docker exec instagram python manage.py collectstatic --noinput')
+    ssh_run(f'sudo docker exec -it -d instagram '
+            f'supervisord -c /srv/instagram/.config/supervisord.conf -n')
+
+if __name__ == '__main__':
+    try:
+        local_build_push()
+        server_init()
+        server_pull_run()
+        copy_secrets()
+        server_cmd()
+    except subprocess.CalledProcessError as e:
+        print('deploy-docker-secrets Error!')
+        print(' cmd:', e.cmd)
+        print(' returncode:', e.returncode)
+        print(' output:', e.output)
+        print(' stdout:', e.stdout)
+        print(' stderr:', e.stderr)
+```
+
+
+
+- nginx ssl 설정을 추가합니다
+
+```nginx
+server{
+    listen 443 ssl;
+    server_name rarlaj.com www.rarlaj.com;
+    charset utf-8;
+
+    # https 관련 설정
+    ssl on;
+    ssl_certificate     /etc/letsencrypt/live/rarlaj.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/rarlaj.com/privkey.pem;
+
+    location / {
+        # 일반적으로 proxy로 요청을 넘겨줄 경우 필요한 설정들
+        include         /etc/nginx/proxy_params;
+        proxy_pass      http://unix:/run/instagram.sock;
+    }
+    location /static/ {
+        alias           /srv/instagram/.static/;
+    }
+}
+```
+
+
+
+- AWS에 접속하여 EC2 > 보안그룹편집 > 인바운드 규칙 > 편집해서 https 추가
+
+
+
+- 다시 배포합니다.
 
 ```
-$ ./manage.py startapp member
+./deploy-docker-secrets.py
 ```
+
+
+
+이제 작업이 완료되었습다. 다만 아래 코드를 입력해서 인증서 갱신을 하도록 합시다. letsencrypt는 3개월만 유효하기 때문입니다.
+
+```
+sudo docker run --rm -it --name certbot -v '/etc/letsencrypt:/etc/letsencrypt' -v '/var/lib/letsencrypt:/var/lib/letsencrypt' certbot/certbot renew --manual
+```
+
+
+
+위 코드를 매번 입력하기 번거로우니 `crontab -e` 명령어를 실행한 뒤 아래 코드를 입력해서 인증서 갱신을 하도록 합시다.
+
+```
+0 0 * * * sudo docker run --rm -it --name certbot -v '/etc/letsencrypt:/etc/letsencrypt' -v '/var/lib/letsencrypt:/var/lib/letsencrypt' certbot/certbot renew --manual
+```
+
+
 
